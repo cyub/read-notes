@@ -59,7 +59,7 @@ theme:
         icon: material/toggle-switch-off
         name: Switch to system preference
   font: false
-  favicon: images/favicon.ico
+  favicon: images/favicon.png
   icon:
     logo: logo
 

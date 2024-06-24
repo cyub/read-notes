@@ -18,7 +18,7 @@ theme:
     - content.code.annotate
     - content.code.copy
     # - content.code.select
-    # - content.footnote.tooltips
+    - content.footnote.tooltips
     # - content.tabs.link
     - content.tooltips
     # - header.autohide
@@ -66,9 +66,13 @@ theme:
 plugins:
   - search:
       separator: '[\s\u200b\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
-  # - git-revision-date-localized:
-  #     type: iso_date
+  - git-revision-date-localized:
+       type: iso_date
+       enable_creation_date: true
   - glightbox
+  - git-committers:
+      repository: cyub/read-notes
+      branch: main
 
 # Additional configuration
 extra:
@@ -124,8 +128,7 @@ markdown_extensions:
   - pymdownx.mark
   - pymdownx.smartsymbols
   - pymdownx.snippets:
-      auto_append:
-        - includes/mkdocs.md
+      check_paths: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -146,3 +149,4 @@ nav:
   - 首页: README.md
   - 编程:
       - 深度探索Go语言: goruntime/README.md
+      - "【斯坦福】cs106L:C++标准库编程": cs106L/README.md

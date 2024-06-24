@@ -108,7 +108,7 @@
 
 .md-typeset .md-typeset__table>table {
     display: table;
-    width: auto;
+    width: 100%;
     margin: 0 auto;
 }
 

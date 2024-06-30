@@ -73,6 +73,7 @@ plugins:
   - git-committers:
       repository: cyub/read-notes
       branch: main
+  - markmap
 
 # Additional configuration
 extra:
@@ -109,6 +110,7 @@ markdown_extensions:
       generic: true
   - pymdownx.betterem:
       smart_enable: all
+  - pymdownx.critic
   - pymdownx.caret
   - pymdownx.details
   - pymdownx.emoji:
@@ -150,3 +152,4 @@ nav:
   - 编程:
       - 深度探索Go语言: goruntime/README.md
       - "【斯坦福】cs106L:C++标准库编程": cs106L/README.md
+      - 多处理器编程的艺术: the-art-of-multiprocessor-programming/README.md

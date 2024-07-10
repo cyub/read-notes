@@ -152,6 +152,7 @@ nav:
   - 小说:
       - 遥远的救世主: the-distant-savior/README.md
   - 编程:
+      - 操作系统导论: ostep/README.md
       - 多处理器编程的艺术: the-art-of-multiprocessor-programming/README.md
       - 深度探索Go语言: goruntime/README.md
       - "【斯坦福】cs106L:C++标准库编程": cs106L/README.md

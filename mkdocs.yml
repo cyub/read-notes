@@ -74,6 +74,14 @@ plugins:
       repository: cyub/read-notes
       branch: main
   - markmap
+  - rss:
+      length: 1000
+      use_git: true
+      feeds_filenames:
+        json_created: feed.json
+        json_updated: feed-updated.json
+        rss_created: feed.xml
+        rss_updated: feed-updated.xml
 
 # Additional configuration
 extra:
@@ -86,10 +94,16 @@ extra:
   social:
     - icon: fontawesome/solid/blog
       link: https://www.cyub.vip
+      name: 个人博客
     - icon: fontawesome/brands/golang
       link: https://go.cyub.vip
+      name: 《深入Go语言之旅》
     - icon: fontawesome/brands/github
       link: https://github.com/cyub
+      name: 个人Github
+    - icon: material/rss
+      link: /feed.xml
+      name: RSS Feed
   
 extra_css:
   - 'css/extra.css'

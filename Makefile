@@ -21,4 +21,6 @@ plugin:
 	pip install mkdocs-jupyter # jupyter
 	pip install mkdocs-glightbox # image lightbox
 	pip install mkdocs-git-committers-plugin-2
+	pip install mkdocs-markmap
+	pip install mkdocs-rss-plugin
 

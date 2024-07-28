@@ -1,3 +1,7 @@
+---
+comments: true
+---
+
 # UNIX网络编程 卷1：套接字联网API
 
 这是一部传世之作！顶级网络编程专家Bill Fenner和Andrew M. Rudoff应邀执笔，对W. Richard Stevens的经典作品进行修订。书中吸纳了近几年网络技术的发展，增添了IPv6、SCTP协议和密钥管理套接字等内容，深入讨论了最新的关键标准、实现和技术。

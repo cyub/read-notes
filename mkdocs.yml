@@ -11,6 +11,7 @@ copyright: Copyright &copy; 2024 Tink
 theme:
   name: material
   language: zh
+  custom_dir: overrides
   features:
     - announce.dismiss
     - content.action.edit

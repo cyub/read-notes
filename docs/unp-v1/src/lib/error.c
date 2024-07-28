@@ -30,7 +30,7 @@ void do_err_sys(int errorflag, const char *fmt, va_list ap) {
 #pragma clang diagnostic pop
 
   if (errorflag) {
-    snprintf(buf + n, MAX_LINE - n, " :%s\n", strerror(errno_saved));
+    snprintf(buf + n, MAX_LINE - n, ": %s\n", strerror(errno_saved));
   } else
     strcat(buf, "\n");
   fflush(stdout); /* in case stdout and stderr are the same */

@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <netinet/in.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,11 +33,23 @@ ssize_t Recvfrom(int sockfd, void *buff, size_t len, int flags,
 ssize_t Sendto(int sockfd, const void *buf, size_t len, int flags,
                const struct sockaddr *addr, socklen_t addr_len);
 
+// 网络选项相关
 void Inet_pton(int af, const char *src, void *dst);
 char *Sock_ntop(const struct sockaddr *sa, socklen_t salen);
+void Setsockopt(int sockfd, int level, int optname, const void *optval,
+                socklen_t optlen);
 
+// IO相关
 ssize_t Read(int fd, void *buf, size_t count);
 void Write(int fd, const void *buf, size_t count);
 
 char *Fgets(char *s, int size, FILE *stream);
 void Fputs(const char *s, FILE *stream);
+
+// 内存相关
+void *Malloc(size_t size);
+
+// 信号相关
+// typedef void (*sighandler_t)(int);
+typedef void Sigfun(int);
+Sigfun *Signal(int signum, Sigfun handler);

@@ -11,7 +11,8 @@ int main(int argc, char **argv) {
   }
   memset(&servaddr, '\0', sizeof(struct sockaddr_in));
   servaddr.sin_family = AF_INET;
-  servaddr.sin_port = htons(7); // 系统默认的echo服务
+  servaddr.sin_port = htons(SERV_PORT); // 系统默认的echo服务
+  printf("SERV_PORT: %d\n", SERV_PORT);
   Inet_pton(AF_INET, argv[1], &servaddr.sin_addr);
   sockfd = Socket(AF_INET, SOCK_DGRAM, 0);
 

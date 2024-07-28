@@ -125,3 +125,9 @@ char *sock_ntop(const struct sockaddr *sa, socklen_t salen) {
   }
   return (NULL);
 }
+
+void Setsockopt(int sockfd, int level, int optname, const void *optval,
+                socklen_t optlen) {
+  if (setsockopt(sockfd, level, optname, optval, optlen) < 0)
+    err_sys("setsockopt()");
+}

@@ -24,10 +24,14 @@ void do_err_sys(int errorflag, const char *fmt, va_list ap) {
   char buf[MAX_LINE + 1];
   errno_saved = errno;
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-nonliteral"
   n = vsnprintf(buf, MAX_LINE, fmt, ap);
 #pragma clang diagnostic pop
+#else
+  n = vsnprintf(buf, MAX_LINE, fmt, ap);
+#endif
 
   if (errorflag) {
     snprintf(buf + n, MAX_LINE - n, ": %s\n", strerror(errno_saved));

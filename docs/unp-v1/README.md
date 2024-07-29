@@ -53,9 +53,9 @@
         ```
     === "signal.c"
 
-      ```c
-      --8<-- "docs/unp-v1/src/lib/signal.c"
-      ```
+        ```c
+        --8<-- "docs/unp-v1/src/lib/signal.c"
+        ```
 
 
 

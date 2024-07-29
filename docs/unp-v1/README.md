@@ -220,3 +220,55 @@ takeaway:
     sudo vi daytime // 将配置中的disable设置为false
     sudo systemctl restart xinetd
     ```
+
+## Chap21: 多播
+
+多播（Multicast），也称为组播，它是一种网络传输方式，允许一个发送者（源）同时向多个接收者（接收组）发送数据。这种技术在需要将相同的数据发送给多个接收者时非常有用，可以减少网络流量和发送者的负担。多播数据通过多播路由协议（如PIM-SM、DVMRP等）在网络中传播。这些协议负责在网络中建立多播分发树，其中IGMP（Internet Group Management Protocol）用于管理多播组成员资格的协议，允许设备加入或离开多播组。
+
+### 多播地址
+
+IPv4的D类地址（从224.0.0.0到239.255.255.255）是IPv4多播地址。D类地址的低序28位构成多播组ID（group ID），整个32位地址则称为组地址（group address）。
+
+特殊的IPV4多播地址：
+
+- **224.0.0.1是所有主机（al-hosts）组**。子网上所有具有多播能力的节点（主机、路由器或打印机等）必须在所有具有多播能力的接口上加入该组。（我们不久将讨论到加入一个
+多播组意味着什么。）
+- **224.0.0.2是所有路由器（all-routers）组**。子网上所有多播路由器必须在所有具有多播能力的接口上加入该组。
+
+介于224.0.0.0到224.0.0.255之间的地址（也可以写成224.0.0.0/24）称为链路局部的 （link local）多播地址。这些地址是为低级拓扑发现和维护协议保留的。多播路由器从不转发以这些地址为目的地址的数据报。
+
+### 多播流程
+
+1. 接收方的应用进程创建一个UDP套接字，捆绑端口一个固定端口（这里假定是1900）到该套接字上，然后加入（joining）一个多播组（这个假定是224.0.1.1）。加入多播组操作是通过调用setsockopt完成，IPv4层内部负责保存这些信息。
+2. 发送方的应用进程创建一个UDP套接字，往IP地址224.0.1.1的1900端口发送一个数据报。**发送多播数据报无需任何特殊处理；发送应用进程不必为此加入多播组**。
+3. 接收方收到多播请求之后，接收方的数据链路层，会过滤掉不是多播的帧，接着传递到IP层，IP层会比较多播的IP地址和本机接收方程序已加入的所有多播地址，来决定是否丢弃。若是接收方程序加入的多播地址，则接入传递到UDP层，UDP层判断端口是不是接收方绑定的1900端口，若不是则丢弃。
+
+### 多播套接字选项
+
+选项名 | 数据类型 | 说明
+--- | --- | ---
+**组成员无关的套接字选项：**
+IP_MULTICAST_IF | struct in_addr | 指定外出多播数据报的默认接口
+IP_MULTICASTTIL | u_char | 指定外出多播数据报的TTL
+IP_MULTICASTLOOP | u_char | 开启或禁止外出多播数据报的回馈
+|
+IPV6_MULTICAST_TF | u_int | 指定外出多播数据报的默认接口
+TPV6_MULTICAST_HOPS | int | 指定外出多播数据报的跳限
+IPV6_MULTICAST_LOOP | u_int | 开启或禁止外出多播数据报的回馈
+**组成员相关的套接字选项:**
+IP_ADD_MEMBERSHIP | struct ip_mreq | 加入一个多播组
+IP_DROP_MEMBERSHIP | struct ip_mreq | 离开一个多播组
+IP_BLOCK_SOURCE | struct ip_mreg_source | 在一个已加入组上阻塞某个源
+IP_UNBLOCK_SOURCE | struct ip_mreg_source | 开通一个早先阻塞的源
+IP_ADD_SOURCE_MEMBERSHIP | struct ip_mreg_source | 加入一个源特定多播组
+IP_DROP_SOURCE_MEMBERSHIP | struct ip_mreg_source | 离开一个源特定多播组
+|
+TPV6_JOIN_GROUP | struct ipv6_mreq | 加入一个多播组
+IPV6_LEAVE_GROUP | struct ipv6_mreq | 离开一个多播组
+|
+MCAST_JOIN_GROUP | struct group_req | 加入一个多播组
+MCAST_LEAVE_GROUP | struct group_req | 离开—一个多播组
+MCAST_BLOCK_SOURCE | struct group_source_req | 在一个已加入组上阻塞某个源
+MCAST_UNBLOCKSOURCE | struct group_source_req | 开通一个早先阻塞的源
+MCAST_JOIN_SOURCE_GROUP | struct group_source_req | 加入一个源特定多播组
+MCAST_LEAVE_SOURCE_GROUP | struct group_source_req | 离开一个源特定多播组

@@ -9,11 +9,11 @@ endif
 
 lib := src/lib
 bin := udpserv01 udpcli01 udpcli02 udpcli03 udpcli04\
-	udpcli_multicasttest udpclibcast1 udpclibcast5
+	udpcli_multicasttest udpclibcast1 udpclibcast5\
+	simple_multicastserver simple_multicastcli
 all: $(bin)
 
 lib_objects :=$(patsubst %.c, %.o, $(wildcard $(lib)/*.c))
-
 $(lib_objects): %.o : %.c
 	$(CC) -c $(CFLAGS) $(LDFLAGS) $< -o $@
 
@@ -69,6 +69,16 @@ dgclibcast5.o: src/chap20/dgclibcast5.c
 .PHONY: udpclibcast5
 udpclibcast5: $(lib_objects) src/chap8/udpcli03.c dgclibcast5.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -DSERV_PORT=13
+
+
+.PHONY: simple_multicastserver
+simple_multicastserver: src/chap21/simple_multicastserver.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+.PHONY: simple_multicastcli
+simple_multicastcli: src/chap21/simple_multicastcli.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
 
 tidy:
 	rm -rf *.o

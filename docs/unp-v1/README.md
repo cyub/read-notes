@@ -272,3 +272,104 @@ MCAST_BLOCK_SOURCE | struct group_source_req | 在一个已加入组上阻塞某
 MCAST_UNBLOCKSOURCE | struct group_source_req | 开通一个早先阻塞的源
 MCAST_JOIN_SOURCE_GROUP | struct group_source_req | 加入一个源特定多播组
 MCAST_LEAVE_SOURCE_GROUP | struct group_source_req | 离开一个源特定多播组
+
+
+1. IP_ADD_MEMBERSHIP、IPV6_JOIN_GROUP 和 MCAST_JOIN_GROUP
+
+    该三个选项用于加入不限源的多播组，其对应的数据结构体如下：
+
+    ```c
+    // IP_ADD_MEMBERSHIP IPv4版本
+    struct ip_mreq {
+        struct  in_addr imr_multiaddr;  /* IP multicast address of group */
+        struct  in_addr imr_interface;  /* local IP address of interface */
+    };
+
+    // IPV6_JOIN_GROUP IPV6版本
+    struct ipv6_mreq {
+        struct in6_addr ipv6mr_multiaddr;
+        unsigned int    ipv6mr_interface;
+    };
+
+    // MCAST_JOIN_GROUP IP协议无关的版本
+    struct group_req {
+        uint32_t                gr_interface;   /* interface index */
+        struct sockaddr_storage gr_group;       /* group address */
+    };
+    ```
+
+    如果ip_mreq的imr_interface指定为INADDR_ANY，或ipv6_mreq的ipv6mr_interface指定为0，或group_req的gr_interface指定为0时候，表明未指定本地接口，那么会由内核选择一个本地接口。
+
+    在一个给定套接字上可以多次加入多播组，不过每次加入的必须是不同的多播地址，或者是在不同接口上的同一个多播地址。多次加入可用于多宿主机，例如创建一个套接字后，对于一个给定的多播地址在每个接口上执行一次加入。
+
+2. IP_DROP_MEMBERSHIP、IPV6_LEAVE_GROUP 和 MCAST_LEAVE_GROUP
+
+    该三个选项用于离开不限源的多播组。如果未指定本地接口，那么离开第一个匹配的多播组。所用到的数据结构与加入多播组是一样的。
+
+    如果一个进程加入某个多播组后从不显式离开该组，那么当相应套接字关闭时（因显式地关闭，或因进程终止），该成员关系也自动地抹除。单个主机上可能有多个套接字各自加入相同的多播组，这种情况下，单个套接字上成员关系的抹除不影响该主机继续作为该多播组的成员，直到最后一个套接字也离开该多播组。
+
+3. IP_BLOCK_SOURCE 和 MCAST_BLOCK_SOURCE
+
+    用于阻塞来自某个源的多播分组。相关数据结构有：
+
+    ```c
+    struct ip_mreq_source {
+        struct  in_addr imr_multiaddr;  /* IP multicast address of group */
+        struct  in_addr imr_sourceaddr; /* IP address of source */
+        struct  in_addr imr_interface;  /* local IP address of interface */
+    };
+
+    struct group_source_req {
+        uint32_t                gsr_interface;  /* interface index */
+        struct sockaddr_storage gsr_group;      /* group address */
+        struct sockaddr_storage gsr_source;     /* source address */
+    };
+    ```
+
+    如果本地接口指定为IPv4的通配地址（INADDR_ANY）或与协议无关的API的0值索引，那就由内核选择与首个匹配的多播组成员关系对应的本地接口。
+
+    源阻塞请求修改已存在的组成员关系，因此必须己经使用 IPADD_ MEMBERSHIE、IFV6_JOIN_GROUP或MCAST_JOIN_GROUP在对应的接口上加入对应的多播组。
+
+4. IP_UNBLOCK_SOURCE 和 MCAST_UNBLOCK_SOURCE
+
+    解除阻塞源。所使用到的数据结构通设置阻塞时候的一样。如果末指定本地接口（也就是说对于IPv4其值为INADDR_ANY，对于与协议无关的API为0值索引），那么开通首个匹配的被阻塞源。
+
+5. IP_ADD_SOURCE_MEMBERSHIP 和 MCAST_JOIN_SOURCE_GROUP
+
+    在一个指定的本地接口上加入一个特定于源的多播组。加入之前或者加入之后，都不能使用IP_ADD_MEMBERSHIP、IPV6_JOIN_GROUP、MCAST_JOIN_GROUP加入这个多播组。
+
+    如果本地接口指定为1Pv4的通配地（INADDRANY）或与协议无关的API的0值索引，那就由内核选择一个本地接口。
+
+6. IP_DROP_SOURCE_MEMBERSHIP 和 MCAST_LEAVE_SOURCE_GROUP
+
+    用于在一个指定的本地接口离开一个特定于源的多播组。细节同不限源的多播组离开相同。
+
+7. IP_MULTICAST_IF 和 IPV6_MULTICAST_IF
+
+    指定通过本套接字发送的多播数据报的外出接口。对于IPv4版本，该接口由某个in_addr结构指定：对于IPPv6，该接口由某个接口索引指定。如果其值对于IPv4为 INADDR_ANY，对于IPv6为0值接口索引，那么先前通过本套接字选项指派的任何接口将被抹除，系统改为每次发送数据报都选择外出接口。
+
+    注意仔细区分当进程加入多播组时指定的（或由内核选定的）本地接口，它是用来决定是通过那个接口接收数据。而这个是当进程发送多播数据报时指定的（或由内核选定的）本地接口。
+
+8. IP_MULTICAST_TTL 和 IPV6_MULTICAST_HOPS
+
+    给外出的多播数据报设置1Pv4的TTL或IPv6的跳限。如果不指定，这两个版本就都默认为1，从而把多播数据报限制在本地子网。
+
+9. IP_MULTICAST_LOOP 和 IPV6_MULTICAST_LOOP
+
+    开启或禁止多播数据报的本地自环（即回馈）。默认情况下回馈开启：如果一个主机在某个外出接口上属于某个多播组，那么该主机上由某个进程发送的目的地为该多播组的每个数据报都有一个副本回馈，被该主机作为一个收取的数据报处理。
+
+    类似广播的是，一个主机上发送的任何广播数据报也被该主机作为收取的数据报处理，但对于广播而言，这种回馈无法禁止。这一点意味着如果一个进程同时局于所发送数据报的目的多播组，它就会收到自己发送的任何数据报。
+
+??? "一个简单的多播服务端和客户端的示例："
+
+    === "simple_multicastserver.c"
+
+        ```c
+        --8<-- "docs/unp-v1/src/chap21/simple_multicastserver.c"
+        ```
+
+    === "simple_multicastcli.c"
+
+        ```c
+        --8<-- "docs/unp-v1/src/chap21/simple_multicastcli.c"
+        ```

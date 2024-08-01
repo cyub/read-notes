@@ -10,3 +10,4 @@
 [多处理器编程的艺术(修订版)](./the-art-of-multiprocessor-programming/) | ![](./images/s26541796.jpg)  { width="150" } | 书籍 |  计算机 | 2024
 [深度探索Go语言对象模型与runtime的原理、特性及应用](./goruntime/) | ![](./images/s34315558.jpg) { width="150" }  | 书籍 |  计算机 | 2024
 [【斯坦福】cs106L:C++标准库编程(2020)](./cs106L/) | ![](./images/cs106l_2020.png) { width="150" }  | 公开课 |  计算机 | 2024
+[x86汇编语言（第2版）：从实模式到保护模式](./x86-assembly-language/) | ![](./images/s34455979.jpg) { width="150" }  | 书籍 |  计算机 | 2023

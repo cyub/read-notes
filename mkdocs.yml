@@ -111,6 +111,10 @@ extra_css:
   - "https://cdn.jsdelivr.net/npm/roboto-font@0.1.0/css/fonts.min.css"
   - "https://cdn.jsdelivr.net/npm/typeface-roboto-mono@1.1.13/index.css"
 
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
 # Extensions
 markdown_extensions:
   - abbr
@@ -171,3 +175,4 @@ nav:
       - 多处理器编程的艺术: the-art-of-multiprocessor-programming/README.md
       - 深度探索Go语言: goruntime/README.md
       - "【斯坦福】cs106L:C++标准库编程": cs106L/README.md
+      - "x86汇编语言（第2版）：从实模式到保护模式": x86-assembly-language/README.md

@@ -10,7 +10,8 @@ endif
 lib := src/lib
 bin := udpserv01 udpcli01 udpcli02 udpcli03 udpcli04\
 	udpcli_multicasttest udpclibcast1 udpclibcast5\
-	simple_multicastserver simple_multicastcli
+	simple_multicastserver simple_multicastcli dgclimcast1 mcast_echoserv\
+	mcast_echocli sdr ssntp
 all: $(bin)
 
 lib_objects :=$(patsubst %.c, %.o, $(wildcard $(lib)/*.c))
@@ -77,6 +78,30 @@ simple_multicastserver: src/chap21/simple_multicastserver.c
 
 .PHONY: simple_multicastcli
 simple_multicastcli: src/chap21/simple_multicastcli.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+.PHONY: dgclimcast1.o
+dgclimcast1.o: src/chap21/dgclimcast1.c
+	$(CC) -c $(CFLAGS) $(LDFLAGS) $< -o $@
+
+.PHONY: dgclimcast1
+dgclimcast1: $(lib_objects) src/chap8/udpcli03.c dgclimcast1.o
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -DSERV_PORT=1234
+
+.PHONY: mcast_echoserv
+mcast_echoserv: src/chap21/mcast_echoserv.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+.PHONY: mcast_echocli
+mcast_echocli: src/chap21/mcast_echocli.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+.PHONY: sdr
+sdr: $(lib_objects) src/chap21/sdr.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+.PHONY: ssntp
+ssntp: $(lib_objects) src/chap21/ssntp.c
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 

@@ -19,6 +19,13 @@ void err_quit(const char *fmt, ...) {
   exit(EXIT_FAILURE);
 }
 
+void err_msg(const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  do_err_sys(0, fmt, ap);
+  va_end(ap);
+}
+
 void do_err_sys(int errorflag, const char *fmt, va_list ap) {
   int n, errno_saved;
   char buf[MAX_LINE + 1];

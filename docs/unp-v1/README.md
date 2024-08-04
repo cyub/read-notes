@@ -212,13 +212,19 @@ takeaway:
 - **NTP（Network Time Protocol，网络时间协议）**。NTP的一种常见使用情形是客户主机配置上待使用的一个或多个服务器主机的IP地址，然后以某个频率（每隔64秒钟或更长时
 间一次）轮询这些服务器主机。根据由服务器返送的当前时间和到达服务器主机的RTT，客户使用精妙的算法更新本地时钟。然而在一个广播局域网上，服务器主机却可以为本地子网上的所有客户主机每隔64秒钟广播一次当前时间，免得每个客户主机各自轮询这个服务器主机，从而减少网络分组流通量。NTP协议以及NTP客户端的简单实现，可以参考笔者写的[demo](https://github.com/cyub/open/tree/main/ntp)。
 
-??? "Ubuntu 如何开启 daytime 服务？"
+??? "Ubuntu 如何开启 daytime/echo 服务？"
 
     ```shell
     sudo apt-get install xinetd
     cd /etc/xinetd.d
     sudo vi daytime // 将配置中的disable设置为false
+    sudo vi echo // 将配置中的disable设置为false
     sudo systemctl restart xinetd
+    // 测试
+    telnet localhost daytime // daytime可以显示指定为13端口。telnet是测试TCP协议的，所以需要daytime开启TCP支持
+    telnet localhost echo // 测试TCP接口的echo服务
+    nc -u localhost 13 // 测试UDP接口的daytime服务
+    nc -u localhost 7 // 测试UDP接口的echo服务
     ```
 
 ## Chap21: 多播
@@ -256,7 +262,7 @@ IPv4的D类地址（从224.0.0.0到239.255.255.255）是IPv4多播地址。D类�
 多播组意味着什么。）
 - **224.0.0.2是所有路由器（all-routers）组**。子网上所有多播路由器必须在所有具有多播能力的接口上加入该组。
 
-介于224.0.0.0到224.0.0.255之间的地址（也可以写成224.0.0.0/24）称为链路局部的 （link local）多播地址。这些地址是为低级拓扑发现和维护协议保留的。多播路由器从不转发以这些地址为目的地址的数据报。
+介于224.0.0.0到224.0.0.255之间的地址（也可以写成224.0.0.0/24）称为链路局部的 （link local）多播地址。这些地址是为低级拓扑发现和维护协议保留的。多播路由器从不转发以这些地址为目的地址的数据报。知名的多播地址（比如mDNS/SSDP/SAP声明等），都是通过IANA组织分配，你可以在[此处](https://www.iana.org/form/multicast-ipv4)提交申请，所有分配的多播地址，都会在[IANA](https://www.iana.org/assignments/multicast-addresses/multicast-addresses.xhtml)网站进行管理。
 
 #### 多播地址和MAC地址的关系
 
@@ -389,7 +395,7 @@ MCAST_LEAVE_SOURCE_GROUP | struct group_source_req | 离开一个源特定多播
 
 #### IP_ADD_MEMBERSHIP/IP_DROP_MEMBERSHIP 是如何工作的？
 
-当谈论IP_ADD_MEMBERSHIP和IP_DROP_MEMBERSHIP时，我们说过内核使用这个“命令”提供的信息来选择接受或丢弃哪些多播数据报。这是事实，但并非全部事实。这种简化意味着我们的主机将接收世界各地所有多播组的多播数据报，然后它将检查其上运行的进程发出的成员资格，以决定是将流量传递给它们还是将其丢弃。正如你可以想象的那样，这完全是带宽浪费。
+当谈论IP_ADD_MEMBERSHIP和IP_DROP_MEMBERSHIP时，我们说过内核使用这个“命令”提供的信息来选择接受或丢弃哪些多播数据报。这是事实，但并非全部事实。这种简化意味着我们的主机将接收世界各地所有多播组的多播数据报，然后它将检查其上运行的进程发出的成员资格，以决定是将流量传递给它们还是将其丢弃。正如你可以想象的那样，这完全是带宽浪费[^1]。
 
 实际发生的情况是，主机指示其路由器告诉它们对哪些多播组感兴趣；然后，这些路由器告诉它们的上游路由器它们想要接收该流量，等等。用于决定何时请求某个群组的流量或表示不再需要该流量的算法有很大差异。然而，有一点永远不会改变：信息的传输方式。 IGMP 就是用于此目的。它代表互联网组管理协议。它是一个新协议，在许多方面与ICMP类似，协议号为2，其消息以IP数据报形式承载，并且要求所有符合2级的主机都实现该协议。
 
@@ -440,6 +446,18 @@ IP多播隧道的工作原理：
         --8<-- "docs/unp-v1/src/chap21/simple_multicastcli.c"
         ```
 
-## 参考资料
+??? "基于多播实现的echo服务："
 
-- [Multicast over TCP/IP HOWTO](https://tldp.org/HOWTO/Multicast-HOWTO.html)
+    === "mcast_echoserv.c"
+
+        ```c
+        --8<-- "docs/unp-v1/src/chap21/mcast_echoserv.c"
+        ```
+
+    === "mcast_echocli.c"
+
+        ```c
+        --8<-- "docs/unp-v1/src/chap21/mcast_echocli.c"
+        ```
+
+[^1]:[Multicast over TCP/IP HOWTO](https://tldp.org/HOWTO/Multicast-HOWTO.html)

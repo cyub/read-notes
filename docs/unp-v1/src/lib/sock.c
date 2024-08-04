@@ -1,4 +1,6 @@
 #include "unp.h"
+#include <netinet/in.h>
+#include <sys/socket.h>
 
 void Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
   if (connect(sockfd, addr, addrlen) < 0)
@@ -130,4 +132,73 @@ void Setsockopt(int sockfd, int level, int optname, const void *optval,
                 socklen_t optlen) {
   if (setsockopt(sockfd, level, optname, optval, optlen) < 0)
     err_sys("setsockopt()");
+}
+
+int family_to_level(int family) {
+  switch (family) {
+  case AF_INET:
+    return IPPROTO_IP;
+#ifdef IPV6
+  case AF_INET6:
+    return IPPROTO_IPV6;
+#endif
+  default:
+    return -1;
+  }
+}
+
+int sockfd_to_family(int sockfd) {
+  struct sockaddr_storage ss;
+  socklen_t len;
+  len = sizeof(ss);
+  if (getsockname(sockfd, (struct sockaddr *)&ss, &len) < 0)
+    return -1;
+  return ss.ss_family;
+}
+
+int Sockfd_to_family(int sockfd) {
+  int rc;
+  if (((rc = sockfd_to_family(sockfd))) < 0)
+    err_sys("sockfd_to_family()");
+
+  return rc;
+}
+
+void sock_set_wild(struct sockaddr *sa, socklen_t salen) {
+  const void *wildptr;
+  switch (sa->sa_family) {
+  case AF_INET: {
+    static struct in_addr in4addr_any;
+    in4addr_any.s_addr = htonl(INADDR_ANY);
+    wildptr = &in4addr_any;
+    break;
+  }
+#ifdef IPV6
+  case AF_INET6: {
+    wildptr = &in6addr_any;
+    break;
+  }
+#endif
+  default:
+    return;
+  }
+
+  sock_set_addr(sa, salen, wildptr);
+}
+
+void sock_set_addr(struct sockaddr *sa, socklen_t salen, const void *addr) {
+  switch (sa->sa_family) {
+  case AF_INET: {
+    struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+    memcpy(&sin->sin_addr, addr, sizeof(struct in_addr));
+    return;
+  }
+#ifdef IPV6
+  case AF_INET6: {
+    struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
+    memcpy(&sin6->sin6_addr, addr, sizeof(struct in6_addr));
+  }
+#endif
+  }
+  return;
 }

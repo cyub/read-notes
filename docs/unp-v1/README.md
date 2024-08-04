@@ -333,13 +333,30 @@ MCAST_LEAVE_SOURCE_GROUP | struct group_source_req | 离开一个源特定多播
 
     如果ip_mreq的imr_interface指定为INADDR_ANY，或ipv6_mreq的ipv6mr_interface指定为0，或group_req的gr_interface指定为0时候，表明未指定本地接口，那么会由内核选择一个本地接口。
 
-    在一个给定套接字上可以多次加入多播组，不过每次加入的必须是不同的多播地址，或者是在不同接口上的同一个多播地址。多次加入可用于多宿主机，例如创建一个套接字后，对于一个给定的多播地址在每个接口上执行一次加入。
+    **在一个给定套接字上可以多次加入多播组，不过每次加入的必须是不同的多播地址**，或者是 **在不同接口上的同一个多播地址**。多次加入可用于多宿主机，例如创建一个套接字后，对于一个给定的多播地址在每个接口上执行一次加入。
+
+    ```c
+    struct ip_mreq mreq;
+    mreq.imr_multiaddr.s_addr = inet_addr("239.255.255.250");	// 多播组的IP地址
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);		// 加入的客户端主机IP地址
+    if (setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1)    {
+        perror("setsockopt");
+        return -1;
+    }
+    ```
 
 2. IP_DROP_MEMBERSHIP、IPV6_LEAVE_GROUP 和 MCAST_LEAVE_GROUP
 
     该三个选项用于离开不限源的多播组。如果未指定本地接口，那么离开第一个匹配的多播组。所用到的数据结构与加入多播组是一样的。
 
     如果一个进程加入某个多播组后从不显式离开该组，那么当相应套接字关闭时（因显式地关闭，或因进程终止），该成员关系也自动地抹除。单个主机上可能有多个套接字各自加入相同的多播组，这种情况下，单个套接字上成员关系的抹除不影响该主机继续作为该多播组的成员，直到最后一个套接字也离开该多播组。
+
+    ```c
+    struct ip_mreq mreq;
+    mreq.imr_multiaddr.s_addr = inet_addr("239.255.255.250");	// 多播组的IP地址
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);		// 加入的客户端主机IP地址
+    setsockopt(sockfd, IPPROTO_IP, IP_DROP_MEMBERSHIP,&mreq, sizeof(mreq)); 
+    ```
 
 3. IP_BLOCK_SOURCE 和 MCAST_BLOCK_SOURCE
 
@@ -361,17 +378,50 @@ MCAST_LEAVE_SOURCE_GROUP | struct group_source_req | 离开一个源特定多播
 
     如果本地接口指定为IPv4的通配地址（INADDR_ANY）或与协议无关的API的0值索引，那就由内核选择与首个匹配的多播组成员关系对应的本地接口。
 
-    源阻塞请求修改已存在的组成员关系，因此必须己经使用 IPADD_ MEMBERSHIE、IFV6_JOIN_GROUP或MCAST_JOIN_GROUP在对应的接口上加入对应的多播组。
+    源阻塞请求修改已存在的组成员关系，因此必须己经使用 IPADD_ MEMBERSHIEIFV6_JOIN_GROUP或MCAST_JOIN_GROUP在对应的接口上加入对应的多播组。
+
+    ```c
+    // 丢弃（阻塞）192.168.64.3主机发自239.255.255.250多播组的数据报
+    struct ip_mreq_source block_mreq;
+    block_mreq.imr_multiaddr.s_addr = inet_addr("239.255.255.250");	// 多播组的IP地址
+    block_mreq.imr_sourceaddr.s_addr = inet_addr("192.168.64.3");	// 源地址
+    block_mreq.imr_interface.s_addr = htonl(INADDR_ANY);		
+    if (setsockopt(sockfd, IPPROTO_IP, IP_BLOCK_SOURCE, &block_mreq, sizeof(block_mreq)) == -1)    {
+        perror("setsockopt");
+        return -1;
+    }
+    ```
 
 4. IP_UNBLOCK_SOURCE 和 MCAST_UNBLOCK_SOURCE
 
-    解除阻塞源。所使用到的数据结构通设置阻塞时候的一样。如果末指定本地接口（也就是说对于IPv4其值为INADDR_ANY，对于与协议无关的API为0值索引），那么开通首个匹配的被阻塞源。
+    解除阻塞源。所使用到的数据结构通设置阻塞时候的一样。如果末指定本地接口（也就是说对于IPv4其值为INADDR_ANY，对于与协议无关的API为0值索引），那么解除首个匹配的被阻塞源。
+
+    ```c
+    // 解除对192.168.64.3主机的阻塞
+    struct ip_mreq_source block_mreq;
+    block_mreq.imr_multiaddr.s_addr = inet_addr("239.255.255.250");	// 多播组的IP地址
+    block_mreq.imr_sourceaddr.s_addr = inet_addr("192.168.64.3");	// 源地址
+    block_mreq.imr_interface.s_addr = htonl(INADDR_ANY);	
+    setsockopt(sockfd, IPPROTO_IP, IP_UNBLOCK_SOURCE,&mreq, sizeof(mreq)); 
+    ```
 
 5. IP_ADD_SOURCE_MEMBERSHIP 和 MCAST_JOIN_SOURCE_GROUP
 
-    在一个指定的本地接口上加入一个特定于源的多播组。加入之前或者加入之后，都不能使用IP_ADD_MEMBERSHIP、IPV6_JOIN_GROUP、MCAST_JOIN_GROUP加入这个多播组。
+    在一个指定的本地接口上加入一个特定于源的多播组。在使用其之前，必须已经使用IP_ADD_MEMBERSHIP、IPV6_JOIN_GROUP、MCAST_JOIN_GROUP加入到了这个非限定源多播组。
 
     如果本地接口指定为1Pv4的通配地（INADDRANY）或与协议无关的API的0值索引，那就由内核选择一个本地接口。
+
+    ```c
+    // 加入239.255.255.250这个多播组之后，只有192.168.64.3发送至该多播组的数据报才被接收
+    struct ip_mreq_source mreq;
+    mreq.imr_multiaddr.s_addr = inet_addr("239.255.255.250");	// 多播组的IP地址
+    mreq.imr_sourceaddr.s_addr = inet_addr("192.168.64.3");	// 源地址
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);		
+    if (setsockopt(sockfd, IPPROTO_IP, IP_ADD_SOURCE_MEMBERSHIP, &mreq, sizeof(mreq)) == -1)    {
+        perror("setsockopt");
+        return -1;
+    }
+    ```
 
 6. IP_DROP_SOURCE_MEMBERSHIP 和 MCAST_LEAVE_SOURCE_GROUP
 
@@ -382,6 +432,14 @@ MCAST_LEAVE_SOURCE_GROUP | struct group_source_req | 离开一个源特定多播
     指定通过本套接字发送的多播数据报的外出接口。对于IPv4版本，该接口由某个in_addr结构指定：对于IPPv6，该接口由某个接口索引指定。如果其值对于IPv4为 INADDR_ANY，对于IPv6为0值接口索引，那么先前通过本套接字选项指派的任何接口将被抹除，系统改为每次发送数据报都选择外出接口。
 
     注意仔细区分当进程加入多播组时指定的（或由内核选定的）本地接口，它是用来决定是通过那个接口接收数据。而这个是当进程发送多播数据报时指定的（或由内核选定的）本地接口。
+
+    ```c
+    struct ip_mreq_source mreq;
+    mreq.imr_multiaddr.s_addr = inet_addr("239.255.255.250");	// 多播组的IP地址
+    mreq.imr_sourceaddr.s_addr = inet_addr("192.168.64.3");	// 源地址
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);		// 加入的客户端主机IP地址
+    setsockopt(sockfd, IPPROTO_IP, IP_DROP_SOURCE_MEMBERSHIP,&mreq, sizeof(mreq)); 
+    ```
 
 8. IP_MULTICAST_TTL 和 IPV6_MULTICAST_HOPS
 

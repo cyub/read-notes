@@ -318,6 +318,13 @@ MCAST_LEAVE_SOURCE_GROUP | struct group_source_req | 离开一个源特定多播
         struct  in_addr imr_interface;  /* local IP address of interface */
     };
 
+    // IP_ADD_MEMBERSHIP IPv4版本增强版本
+    struct ip_mreqn {
+        struct  in_addr imr_multiaddr;  /* IP multicast address of group */
+        struct  in_addr imr_address;    /* local IP address of interface */
+        int             imr_ifindex;    /* Interface index; cast to uint32_t */
+    };
+
     // IPV6_JOIN_GROUP IPV6版本
     struct ipv6_mreq {
         struct in6_addr ipv6mr_multiaddr;
@@ -331,7 +338,17 @@ MCAST_LEAVE_SOURCE_GROUP | struct group_source_req | 离开一个源特定多播
     };
     ```
 
-    如果ip_mreq的imr_interface指定为INADDR_ANY，或ipv6_mreq的ipv6mr_interface指定为0，或group_req的gr_interface指定为0时候，表明未指定本地接口，那么会由内核选择一个本地接口。
+    如果ip_mreq的imr_interface指定为INADDR_ANY，或ip_mreqn.imr_ifindex设置为0，或ipv6_mreq的ipv6mr_interface指定为0，或group_req的gr_interface指定为0时候，表明未指定本地接口，那么会由内核选择一个本地接口。
+
+    ip_mreqn.imr_ifindex代表的是网卡的索引值，它的优先级高于ip_mreqn.imr_address。网卡名称（通过ifconfig查看获得）和网卡索引值可以通过下面函数进行相互转换：
+
+    ```c
+    #include <net/if.h>
+
+    unsigned int if_nametoindex(const char *ifname);
+
+    char *if_indextoname(unsigned int ifindex, char *ifname);
+    ```
 
     **在一个给定套接字上可以多次加入多播组，不过每次加入的必须是不同的多播地址**，或者是 **在不同接口上的同一个多播地址**。多次加入可用于多宿主机，例如创建一个套接字后，对于一个给定的多播地址在每个接口上执行一次加入。
 

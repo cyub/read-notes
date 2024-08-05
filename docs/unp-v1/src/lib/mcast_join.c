@@ -56,7 +56,6 @@ int mcast_join(int sockfd, const struct sockaddr *grp, socklen_t grplen,
     } else // 否则，由系统决定接口地址
       mreq.imr_interface.s_addr = htonl(INADDR_ANY);
 
-    printf("!!!!");
     return setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq,
                       sizeof(mreq));
   }

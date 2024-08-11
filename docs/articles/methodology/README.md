@@ -1,4 +1,4 @@
 # 方法论
 
 - [从一个疯狂下载者变成学习者](./从一个疯狂下载者变成学习者.md)
-- 成为一名优秀的程序员：心态和学习策略: [中文版](./成为一名优秀的程序员：心智模型和学习策略.md) [英文版](./To%20Be%20A%20Great%20Programmer:%20Mindset%20And%20Learning%20Strategy.md)
+- 成为一名优秀的程序员：心智模型和学习策略: [中文版](./成为一名优秀的程序员：心智模型和学习策略.md) [英文版](./To%20Be%20A%20Great%20Programmer:%20Mindset%20And%20Learning%20Strategy.md)

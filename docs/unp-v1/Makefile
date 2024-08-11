@@ -11,7 +11,7 @@ lib := src/lib
 bin := udpserv01 udpcli01 udpcli02 udpcli03 udpcli04\
 	udpcli_multicasttest udpclibcast1 udpclibcast5\
 	simple_multicastserver simple_multicastcli dgclimcast1 mcast_echoserv\
-	mcast_echocli sdr ssntp
+	mcast_echocli sdr ssntp if interface_ip ifconfig
 all: $(bin)
 
 lib_objects :=$(patsubst %.c, %.o, $(wildcard $(lib)/*.c))
@@ -104,6 +104,17 @@ sdr: $(lib_objects) src/chap21/sdr.c
 ssntp: $(lib_objects) src/chap21/ssntp.c
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
+.PHONY: if
+if: src/chap21/if.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+.PHONY: interface_ip
+interface_ip: src/chap21/interface_ip.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+.PHONY: ifconfig
+ifconfig: src/chap21/ifconfig.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 tidy:
 	rm -rf *.o

@@ -31,7 +31,6 @@ int main(int argc, char *argv[]) {
   strncpy(ifr.ifr_name, argv[1], IFNAMSIZ - 1);
 
   if (ioctl(fd, SIOCGIFADDR, &ifr) < 0) {
-    // fprintf(stderr, "%s ip get error:", perr)
     perror("ioctl()");
     exit(EXIT_FAILURE);
   }

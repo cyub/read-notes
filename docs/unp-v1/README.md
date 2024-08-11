@@ -507,7 +507,9 @@ IP多播隧道的工作原理：
 
 这种使用隧道技术传送IP分组的方法称为"IP中IP分组"(IP-in-IP)。
 
-??? "一个简单的多播服务端和客户端的示例："
+#### 示例程序
+
+??? "一个简单的多播服务端和客户端的示例"
 
     === "simple_multicastserver.c"
 
@@ -521,7 +523,7 @@ IP多播隧道的工作原理：
         --8<-- "docs/unp-v1/src/chap21/simple_multicastcli.c"
         ```
 
-??? "基于多播实现的echo服务："
+??? "基于多播实现的echo服务"
 
     === "mcast_echoserv.c"
 
@@ -534,5 +536,26 @@ IP多播隧道的工作原理：
         ```c
         --8<-- "docs/unp-v1/src/chap21/mcast_echocli.c"
         ```
+
+??? 获取网卡相关信息示例
+
+    === "获取所有网卡名称与其索引值"
+
+        ```c
+        --8<-- "docs/unp-v1/src/chap21/if.c"
+        ```
+
+    === "获取指定的IPv4网卡信息"
+
+        ```c
+        --8<-- "docs/unp-v1/src/chap21/interface_ip.c"
+        ```
+
+    === "简易版本ifconfig"
+
+        ```c
+        --8<-- "docs/unp-v1/src/chap21/ifconfig.c"
+        ```
+
 
 [^1]:[Multicast over TCP/IP HOWTO](https://tldp.org/HOWTO/Multicast-HOWTO.html)

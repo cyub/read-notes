@@ -6,6 +6,10 @@
 
 配套在线观看地址：https://www.bilibili.com/video/BV19x4y1E79V/?vd_source=f3e532bab07bd39d7aa9e7d412b650c5。
 
+在线编译器：https://www.onlinegdb.com/online_c++_compiler
+
+部分笔记内容来自： [C++ Annotations Version 13.00.00](http://www.icce.rug.nl/documents/cplusplus/)
+
 ## 简介 Intro
 
 ### CS106L课程目标 Goals of CS 106L
@@ -201,12 +205,16 @@ choice if they want it. 允许程序员完全控制、负责和如果他们想�
 
 #### 字符串流 stringstream 构造函数
 
-```cpp
-istringstream iss(“Initial”);
-ostringstream oss(“Initial”);
+- **ostringstream（Output String Stream）** 是一个输出流，指的是数据从程序的其他部分 "输出" 到 ostringstream 对象中，然后被存储在内部的字符串缓冲区里。
 
-istringstream iss(“Initial”, stringstream::bin); // 以二进制binary形式打开
-ostringstream oss(“Initial”, stringstream::ate); // ate: start at end 打开之后，立刻移动到流的末尾
+- **istringstream（Input String Stream）** 是一个输入流，指的是数据从 istringstream 对象 "输入" 到程序其他部分中。
+
+```cpp
+istringstream iss("Initial");
+ostringstream oss("Initial");
+
+istringstream iss("Initial", stringstream::bin); // 以二进制binary形式打开
+ostringstream oss("Initial", stringstream::ate); // ate: start at end 打开之后，立刻移动到流的末尾
 ```
 
 #### 字符串流格式的 I/O stringstream formatted i/o
@@ -218,6 +226,8 @@ iss >> var1 >> var2; // 将iss的buffer数据抽取到var1
 ```
 
 #### 字符串流根据空白字符分割token是怎么回事？
+
+流会在遇到任何空白处停止读取或该类型的任何无效字符处停止读取。
 
 **示例1**：
 
@@ -250,8 +260,6 @@ token4: -38271
 ```
 
 **示例2**：
-
-流会在遇到任何空白处停止读取或该类型的任何无效字符处停止读取。
 
 ![](./images/stringstream_token2.png)
 
@@ -624,6 +632,106 @@ if (not getline(cin, str).fail())
     ```
 
 ### 格式化输出
+
+#### 格式修改成员函数
+
+- ios &ios::copyfmt(ios &obj):
+
+    将obj 的所有格式标志都将复制到当前 ios 对象，并返回当前的 ios 对象。
+
+- ios::fill() const:
+
+    返回当前填充字符， 默认是空白字符
+
+- char ios::fill(char padding):
+
+    重新定义填充字符，并返回重新定义之前使用的填充字符。
+
+    ```cpp
+    cout.fill('0'); 用'0'作填充符
+    cout << setfill('+'); 用'+'作填充符
+    ```
+
+- ios::fmtflags ios::flags() const:
+
+    返回当前流的格式的标志值
+
+    ```cpp
+    if (cout.flags() & ios::hex)
+        cout << "Integral values are printed as hex numbers\n"
+    ```
+
+- ios::fmtflags ios::flags(ios::fmtflags flagset):
+
+    使用flagset设置新的标志值，并返回之前的标志值。
+    ```cpp
+    // change the representation to hexadecimal
+    cout.flags(ios::hex | cout.flags() & ~ios::dec);
+    ```
+
+- int ios::precision() const:
+
+    返回浮点数的精度值，默认是6位。
+
+- int ios::precision(int signif):
+
+    设置浮点数的精度值，并返回之前的精度值。
+
+    ```cpp
+    cout.precision(3);          // 3 digits precision
+    cout << setprecision(3);    // same, using the manipulator
+
+    cout << 1.23 << " " << 12.3 << " " << 123.12 << " " << 1234.3 << '\n';
+    // displays: 1.23 12.3 123 1.23e+03
+    ```
+
+- ios::fmtflags ios::setf(ios::fmtflags flags):
+
+    设置一个或多个格式标志（使用 bitor 运算符组合多个标志），并返回前一组设置值，已设置的标志不受影响。
+
+- ios::fmtflags ios::setf(ios::fmtflags flags, ios::fmtflags mask):
+
+    清除 mask 对应的所有标志并设置 flags 中指定的标志，并返回前一组标志。
+
+    ```cpp
+    // left-adjust information in wide fields: 左对齐显示
+    cout.setf(ios::left, ios::adjustfield);
+
+    // display integral values as hexadecimal numbers:
+    // 以16进制形式显示整数类型
+    cout.setf(ios::hex, ios::basefield);
+
+    // display floating point values in scientific notation:
+    // 以科学技术法形式显示浮点数
+    cout.setf(ios::scientific, ios::floatfield);
+    ```
+- ios::fmtflags ios::unsetf(fmtflags flags):
+
+    清除flags指定的标志，并返回之前的标志
+
+    ```cpp
+    cout << 12.24;              // displays  12.24
+    cout.setf(ios::fixed);
+    cout << 12.24;              // displays  12.240000
+    cout.unsetf(ios::fixed);    // undo a previous ios::fixed setting.
+    cout << 12.24;              // displays  12.24
+    cout << resetiosflags(ios::fixed);  // using manipulator rather
+                                        // than unsetf
+    ```
+
+- int ios::width() const:
+
+    返回字符宽度，默认是0。
+
+- int ios::width(int nchars):
+
+    设置字符宽度，每次输入操作之后，会重置为0。
+
+    ```cpp
+    cout.width(5);
+    cout << 12;   // 输出'     12'，12前面有3个空字符，字符宽度是5，需减去12本身暂用的2个宽度
+    cout << setw(12) << "hello";    // 输出'     hello'，hello前面有7个空格
+    ```
 
 #### 每次都endl，还是每次都\n，然后最后flush?
 

@@ -361,7 +361,7 @@ iss.seekg(pos);
 
 #### 要点 Key Takeaways
 
-- `>>` 运算符用于提取特定类型的下一个变量，直到遇到下一个空白。
+- `>>` 运算符用于提取特定类型的下一个变量，会跳过最开始的空白字符后一直读取直到遇到下一个空白（这个空白不会跳过）。
 - `>>` 和 `<<` 运算符返回对流的引用本身，因此在每个实例中流都是左侧操作数。
 - 对字符串流。读写同时往往会导致微妙的错误，要小心！
 
@@ -519,10 +519,6 @@ if (not cin.fail())
 if (not (cin >> x).fail())
 if (not getline(cin, str).fail())
 ```
-
-
-
-
 
 #### 字符串转整数演示位状态判断
 
@@ -791,3 +787,154 @@ int endlAtEnd() {
 ```
 
 通过测试可以发现第二个性能会更好。
+
+## 类型 与 流的高级操作
+
+### 从一个欢迎程序说起
+
+**不好的示例**：
+
+```cpp
+--8<-- "docs/cs106L/src/StreamsII/badWelcomeParam.cpp"
+```
+
+测试：
+
+```sh
+make badWelcomeParam
+echo "jimmy\n20\nno" | ./badWelcomeParam
+echo "san zhang\n30\nno" | ./badWelcomeParam
+```
+
+上面测试内容输出如下：
+
+```sh
+What is your name? What is your age? Hello jimmy (age 20)
+Do you want to try again? You said: no
+What is your name? What is your age? Hello san (age 0)
+Do you want to try again? You said:
+```
+
+可以看到第二次测试输出异常了，由于age读取失败，后面的`cin >> response`也会失败，因此此时cin的状态早已经是fail状态了（When cin fails, all future cin operations fail too.）。此时可以在`cin >> response`之前添加`cin.clear()`清除掉之前错误状态(当然程序最终结果也还是错误的)。
+
+```sh
+export CLEAN_CIN_STATE=on &&  make badWelcomeParam
+echo "san zhang\n30\nno" | ./badWelcomeParam
+```
+
+这次输出：
+
+```sh
+What is your name? What is your age? Hello san (age 0)
+Do you want to try again? You said: zhang
+```
+
+**优化处理**：
+
+```cpp
+--8<-- "docs/cs106L/src/StreamsII/optimizeWelcomeParam.cpp"
+```
+
+`getInteger()` 优化记录：
+
+=== "版本1"
+
+    ```cpp
+    int getInteger(const string& prompt) {
+        cout << prompt;
+        int result;
+        cin >> result; // 对于输入类似"abc"的情况，最终读取到的是0，这个结果错误的。
+        // 对于输入类似"123 abc"的情况，最终读取到的是123，这个结果也是错误的
+        return result;
+    }
+    ```
+
+=== "版本2"
+
+    ```cpp
+    int getInteger(const string& prompt) {
+        cout << prompt;
+        string token;
+        cin >> token; // 对于输入类似"abc 123"的情况，最终读取到的是123，这个结果错误的。
+        istringstream iss(token);
+        int result; char trash;
+        if (!(iss >> result) || iss >> trash)
+            return getInteger(prompt); // 迭代性能不好
+        return result;
+    }
+    ```
+
+=== "版本3"
+
+    ```cpp
+    int getInteger(const string& prompt) { // 符合预期目的
+        while (true) {
+            cout << prompt;
+            string line;
+            if (!getline(cin, line)) // 同时调用getInteger时候，会发生错误
+                throw domain_error("getInteger: end of file reached");
+
+            istringstream iss(line);
+            int result; char trash;
+            if (iss >> result && !(iss >> trash))
+                return result;
+        }
+    }
+    ```
+
+=== "最终版本"
+    与版本3 相比，添加了默认参数，并且将错误信息进行了封装。
+
+    ```cpp
+    int getInteger(const string& prompt = "[shortened]",
+        const string& reprompt = "[shortened]") {
+        while (true) {
+            cout << prompt;
+            string line; int result; char trash;
+            if (!getline(cin, line))
+            throw domain_error("[shortened]");
+            istringstream iss(line);
+            if (iss >> result && !(iss >> trash)) return result;
+            cout << reprompt << endl;
+        }
+    }
+    ```
+
+### 小心处理 >> 和 getline 混合的情况
+
+- `>>` 运算符用于提取特定类型的下一个变量，会跳过最开始的空白字符后一直读取直到遇到下一个空白（这个空白不会跳过）
+- `getline()` 函数用于读取一行，直到遇到换行符，包括换行符，返回的内容中会去掉换行符。
+
+有问题的示例：
+
+```cpp
+--8<-- "docs/cs106L/src/StreamsII/getLine.cpp"
+```
+
+优化后的示例：
+
+```cpp
+--8<-- "docs/cs106L/src/StreamsII/getLine2.cpp"
+```
+
+### 现代数据类型
+
+字符串长度类型应该是 `size_t`类型。
+
+```cpp
+--8<-- "docs/cs106L/src/StreamsII/string_iterator.cpp"
+```
+
+当使用 size_t 类型时候，需要注意溢出情况，下面去掉头尾字符的函数示例演示了这个错误：
+
+```cpp
+string chopBothEnds(const string& str) {
+    string result = "";
+    for (size_t i = 1; i < str.size()-1; ++i) {
+        result += str[i];
+    }
+    return result;
+}
+```
+
+当 str 为空字符串时候，`str.size() -1` 值-1，而 i 为 `size_t` 类型，是无符号类型的，那么 `str.size() -1` 最后转换成  `uint` 类型最大值了。

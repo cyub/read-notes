@@ -1,18 +1,33 @@
+---
+hide:
+  - toc
+---
 # cs106L: C++标准库编程
 
 ## 概要
 
-斯坦福公开课：**cs106L: C++标准库编程(2020)**，对应课程地址：https://web.stanford.edu/class/archive/cs/cs106l/cs106l.1204/index.html。
+**课程名称**：斯坦福公开课：**cs106L: C++标准库编程(2020)**
 
-配套在线观看地址：https://www.bilibili.com/video/BV19x4y1E79V/?vd_source=f3e532bab07bd39d7aa9e7d412b650c5。
+**课程地址**：https://web.stanford.edu/class/archive/cs/cs106l/cs106l.1204/index.html。
 
-在线编译器：https://www.onlinegdb.com/online_c++_compiler
+**在线观看地址**：https://www.bilibili.com/video/BV19x4y1E79V/?vd_source=f3e532bab07bd39d7aa9e7d412b650c5。
 
-部分笔记内容来自： [C++ Annotations Version 13.00.00](http://www.icce.rug.nl/documents/cplusplus/)
+**工具**：
 
-## 简介 Intro
+- 在线编译器：https://www.onlinegdb.com/online_c++_compiler
+- C++语言参考：https://cplusplus.com/reference/
 
-### CS106L课程目标 Goals of CS 106L
+**部分笔记内容来自**：
+
+- [C++ Annotations Version 13.00.00](http://www.icce.rug.nl/documents/cplusplus/)
+- [programiz.com C++ Tutorial](https://www.programiz.com/cpp-programming/standard-template-library)
+- [C++ Language Tutorial](https://cplusplus.com/doc/tutorial/)
+
+## 简介
+
+### CS106L课程目标
+
+Goals of CS 106L:
 
 1. Learn what features are out there in C++ and why they exist. 了解 C++ 中有哪些功能以及它们存在的原因。
 2. Become comfortable with reading C++ documentation. 习惯阅读 C++ 文档。
@@ -20,7 +35,7 @@
 
 ![](./images/cs106l_landscape.png)
 
-### C++语言历史 History of C++
+### C++语言历史
 
 从`Hello, world`说起。
 
@@ -938,3 +953,363 @@ string chopBothEnds(const string& str) {
 ```
 
 当 str 为空字符串时候，`str.size() -1` 值-1，而 i 为 `size_t` 类型，是无符号类型的，那么 `str.size() -1` 最后转换成  `uint` 类型最大值了。
+
+#### 类型别名
+
+什么时候使用类型别名(type alias)：
+
+- 当类型名称太长，使用更短的别名可以使代码更易读
+- 在库中，每个类都有自己的类型名称。例如：
+    - vector::iterator, map::iterator, string::iterator
+    - vector::reference, map::reference, string::reference
+
+```cpp
+using map_iterator = std::unordered_map<forward_list<Student>, unordered_set>::const_iterator;
+
+map_iterator begin = studentMap.cbegin();
+map_iterator end = studentMap.cend();
+```
+
+当我们不关心具体类型时候，可以使用 `auto` 关键字：
+
+```cpp
+auto begin = studentMap.cbegin();
+auto end = studentMap.cend();
+```
+
+在 C++ 中，auto 关键字用于自动推导变量的类型。当你使用 auto 声明一个变量时，编译器会根据初始化表达式的类型来确定变量的类型。更多 `auto` 用法可以参考：
+
+```cpp
+auto calculateSum(const vector<string>& v) {
+    auto multiplier = 2.4; // double
+    auto name = "Avery"; // char* (c-string)
+    auto betterName1 = string{"Avery“}; // string
+    const auto& betterName2 = string{"Avery“}; // const string&
+    auto copy = v; // vector<string>
+    auto& refMult = multiplier; // double&
+    auto func = [](auto i) {return i*2;}; // ???
+    return betterName;
+}
+```
+
+auto 有一个特性，它会丢弃表达式中的 const 和引用（reference）修饰符。
+
+```cpp
+int someInt = 5;
+const int& ref = someInt;
+auto a = ref; // a 的类型是 int，而不是 const int&
+```
+
+因为 auto 会丢弃引用和 const 修饰符，a将会被推导位 int 类型，并且它的值会被初始化为 ref引用的值，所以它的值是 5。
+
+解决办法是使用 auto&:
+
+```cpp
+const int& ref = someInt;
+auto& a = ref; // a 的类型是 const int&
+```
+
+#### pair/tuple
+
+```cpp
+// make_pair/tuple (C++11) automatically deduces the type!
+auto prices = make_pair(3.4, 5); // pair<double, int>
+auto values = make_tuple(3, 4, "hi"); // tuple<int, int, char*>
+
+// access via get/set
+prices.first = prices.second; // prices = {5.0, 5};
+get<0>(values) = get<1>(values); // values = {4, 4, "hi"};
+
+// structured binding (C++17) – extract each component
+auto [a, b] = prices; // a, b are copies of 5.0 and 5
+const auto& [x, y, z] = values; // x, y, z are const references
+// to the 4, 4, and "hi".
+```
+
+#### struct
+
+```cpp
+struct Discount {
+    double discountFactor;
+    int expirationDate;
+    string nameOfDiscount;
+}; // don’t forget this semicolon :/
+
+// Call to Discount’s constructor or initializer list
+auto coupon1 = Discount{0.9, 30, "New Years"};
+Discount coupon2 = {0.75, 7, "Valentine’s Day"};
+coupon1.discountFactor = 0.8;
+coupon2.expirationDate = coupon1.expirationDate;
+
+// structured binding (C++17) – extract each component
+auto [factor, date, name] = coupon1;
+```
+
+#### 引用
+
+```cpp
+string tea = "Ito-En";
+string copy = tea;
+string& ref = tea;
+
+// note: the string operator [] returns a reference to a char in string
+tea[1] = 'a'; // tea = "Iao-En";
+copy[2] = 'b'; // tea = "Iao-En"; (no change)
+ref[3] = 'c'; // tea = "IaocEn";
+
+char letterCopy = tea[4];
+char& letterRef = tea[5];
+
+letterCopy = 'd'; // tea = "IaocEn"; (no change)
+letterRef = 'e'; // tea = "IaocEe";
+ref = copy; // tea = "Iab-En"; cannot reassign referenc
+```
+
+##### 悬挂引用
+
+悬挂引用(dangling references)指的是在一个作用域结束后，引用对象仍然存在的情况。never return references to local variables!
+
+```cpp
+char& firstCharBad(string& s) {
+    string local = s;
+    return local[0];
+}
+
+char& firstCharGood(string& s) {
+    return s[0];
+}
+
+int main() {
+    string tea = "Ito-En";
+    char& bad = firstCharBad(tea); // undefined, ref to local out of scope
+    char& good = firstCharGood(tea); // good ref to tea[0]
+}
+```
+
+#### 类型转换
+
+类型转换有两种方向：
+
+- 隐式转换(类型提升)：编译器自动转换，例如：int -> double
+- 显式转换(强制转换)：需要显示的转换，例如：doule -> int
+
+```cpp
+int v1 = static_cast<double>(3.4);// explicit cast(coercion): double ==> int
+double v2 = 6; // implicit cast(promotion): int ==> double
+
+const int v1 = 3; // implicit cast(promotion): int ==> const int
+int v2 = const_cast<int>(v1); // explicit cast(coercion): const int ==> int
+```
+
+相比旧式 `(type)(value)` 的强制转换，`static_cast` 可以检查转换的类型是否安全。
+
+#### 统一初始化
+
+C++11 引入了统一初始化(Uniform initialization)，使得初始化更简单，例如：
+
+```cpp
+struct Course {
+string code;
+Time start, end;
+vector<string> instructors;
+}
+
+int main() {
+    vector<int> vec{3, 1, 4, 1, 5, 9};
+    Course now {"CS106L",
+    {13, 30}, {14, 30},
+    {"Wang", "Zeng"} };
+}
+```
+
+所有内容都在一个例子中：
+
+```cpp
+pair<int, int> findPriceRange(int dist) {
+    int min = static_cast<int>(dist * 0.08 + 100);
+    int max = static_cast<int>(dist * 0.36 + 750);
+    return {min, max}; // uniform initialization
+}
+
+int main() {
+    int dist = 6452;
+    auto [min, max] = findPriceRange(dist);
+    cout << "You can find prices between: " << min << " and " << max;
+}
+```
+
+## 序列容器
+
+C++是一门 **多范式编程语言(multi-paradigm language)**，可以进行 **过程式编程(procedural programming)**、**面向对象编程(object-oriented programming)** 和 **泛型编程(generic programming)**。C++的泛型编程是通过模板技术来实现的。
+
+C++提供了一个标准模板库，称为 STL(Standard Template Library)，它提供了一系列的模板，用来实现各种数据结构。
+
+STL 提供的主要容器有：
+
+- **序列容器（Sequence Containers）**：这些容器支持通过索引访问元素，并且可以动态地增加或减少大小。
+
+    - vector<T>：动态数组，提供快速随机访问。
+    - deque<T>：双端队列，允许在两端快速插入和删除。
+    - list<T>：双向链表，提供在列表中间快速插入和删除的能力。
+    - forward_list<T>：单向链表，只允许在头部或通过迭代器插入和删除。
+    - array<T, N>：固定大小的数组。
+
+- **关联容器（Associative Containers）**：这些容器通过键来存储元素，并且通常使用平衡树或哈希表来实现。
+
+    - set<T>：不允许重复的元素集合。
+    - multiset<T>：允许重复元素的集合。
+    - map<K, V>：键值对集合，不允许键重复。
+    - multimap<K, V>：允许键重复的键值对集合。
+    - unordered_set<T>：基于哈希表的不允许重复元素的集合。
+    - unordered_multiset<T>：基于哈希表的允许重复元素的集合。
+    - unordered_map<K, V>：基于哈希表的键值对集合。
+    - unordered_multimap<K, V>：基于哈希表的允许键重复的键值对集合。
+
+- **容器适配器（Container Adapters）**：这些是更简单的容器，它们使用其他容器来实现。
+
+    - stack<T>：后进先出（LIFO）栈。
+    - queue<T>：先进先出（FIFO）队列。
+    - priority_queue<T>：优先队列，元素根据优先级排序。
+
+vector可以存放着各种类型的元素，例如：
+
+```cpp
+std::vector<int> vecInt;
+std::vector<string> vecStr;
+std::vector<myStruct> vectStruct;
+std::vector<std::vector<string>> vecOfVec;
+```
+
+### 向量
+
+向量(vector)是C++ 标准模板库的一部分。要使用向量，我们需要在程序中包含vector头文件。
+
+```cpp
+#include <vector>
+```
+
+#### 向量声明
+
+包含头文件后，我们可以通过以下方式在 C++ 中声明向量：
+
+```cpp
+std::vector<T> vector_name;
+```
+
+类型参数<T>指定向量的类型。它可以是任何原始数据类型，例如int 、 char 、 float等。例如，
+
+#### 向量初始化
+
+方法一：
+
+通过直接向向量提供值来初始化向量。
+
+```cpp
+// Initializer list
+vector<int> vector1 = {1, 2, 3, 4, 5};
+
+// Uniform initialization
+vector<int> vector2 {1, 2, 3, 4, 5};
+```
+
+方法二：
+
+通过复制初始化（也称为值初始化）进行初始化向量。
+
+```cpp
+vector<int> vector3(5, 12);
+```
+
+上面代码中5是向量的大小， 12是值。此处代码创建一个大小为5 的int向量，并使用值12初始化该向量。所以，向量相当于：
+
+```cpp
+vector<int> vector3 = {12, 12, 12, 12, 12};
+```
+
+#### 向量基本操作
+
+```cpp
+--8<-- "docs/cs106L/src/SequenceContainers/vector_op.cpp"
+```
+
+向量函数：
+
+
+函数    | 描述 |
+| --- | --- |
+size() ｜ 返回向量中存在的元素数量
+clear() ｜ 删除向量的所有元素
+front() ｜ 返回向量的第一个元素
+back() ｜ 返回向量的最后一个元素
+empty() ｜ 如果向量为空，则返回1 (true)
+capacity() ｜ 检查向量的总体大小
+
+
+
+更多操作见：[cplusplus vecotr Reference](https://cplusplus.com/reference/vector/vector/)
+
+#### 迭代器
+
+向量迭代器用于指向向量元素的内存地址。在某些方面，它们的作用类似于 C++ 中的指针。我们可以使用以下语法创建向量迭代器：
+
+```cpp
+vector<T>::iterator iteratorName;
+```
+
+例如，如果我们有2 个int和double类型的向量，那么我们将需要2 个与它们的类型相对应的不同迭代器：
+
+```cpp
+// iterator for int vector
+vector<int>::iterator iter1;
+
+// iterator for double vector
+vector<double>::iterator iter2;
+```
+
+```cpp
+--8<-- "docs/cs106L/src/SequenceContainers/vector_iterator.cpp"
+```
+
+### 数组
+
+std::array是在<array>标头中定义的，因此我们必须先包含此标头，然后才能使用std::array 。
+
+```cpp
+#include <array>
+
+// declaration of std::array 
+std::array<T, N> array_name;
+```
+
+- T - 要存储的元素类型
+- N - 数组中的元素数量
+
+#### 数组初始化
+
+方法一：
+
+```cpp
+// initializer list
+std::array<int, 5> numbers = {1, 2, 3, 4, 5};
+```
+
+方法二：
+
+```cpp
+// uniform initialization
+std::array<int, 5> marks {10, 20, 30, 40, 50};
+```
+
+#### 数组基本操作
+
+```cpp
+--8<-- "docs/cs106L/src/SequenceContainers/array_op.cpp"
+```
+
+更多操作见：[cplusplus array Reference](https://cplusplus.com/reference/array/)
+
+#### 与 STL 算法组合使用
+
+```cpp
+--8<-- "docs/cs106L/src/SequenceContainers/array_stl_algorithm.cpp"
+```

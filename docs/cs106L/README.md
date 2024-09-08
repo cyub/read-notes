@@ -4,8 +4,6 @@ hide:
 ---
 # cs106L: C++标准库编程
 
-## 概要
-
 **课程名称**：斯坦福公开课：**cs106L: C++标准库编程(2020)**
 
 **课程地址**：https://web.stanford.edu/class/archive/cs/cs106l/cs106l.1204/index.html。

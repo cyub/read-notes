@@ -15,6 +15,7 @@ hide:
 **工具**：
 
 - 在线编译器：https://www.onlinegdb.com/online_c++_compiler
+- 另一个在线编译器：https://cpp.sh
 - C++语言参考：https://cplusplus.com/reference/
 
 **部分笔记内容来自**：
@@ -1093,6 +1094,22 @@ int main() {
 - 隐式转换(类型提升)：编译器自动转换，例如：int -> double
 - 显式转换(强制转换)：需要显示的转换，例如：doule -> int
 
+在 C++ 中，我们可以通过三种主要方式使用显式转换：
+
+- C++ named casts C++: 命名强制转换
+
+- C-style type casting (also known as cast notation) : C 样式类型转换（也称为转换表示法）
+
+    ```cpp
+    (data_type)expression;
+    ```
+
+- Function notation (also known as old C++ style type casting): 函数表示法（也称为旧 C++ 样式类型转换）
+
+    ```cpp
+    data_type(expression);
+    ```
+
 ```cpp
 int v1 = static_cast<double>(3.4);// explicit cast(coercion): double ==> int
 double v2 = 6; // implicit cast(promotion): int ==> double
@@ -1102,6 +1119,51 @@ int v2 = const_cast<int>(v1); // explicit cast(coercion): const int ==> int
 ```
 
 相比旧式 `(type)(value)` 的强制转换，`static_cast` 可以检查转换的类型是否安全。
+
+##### 命名强制转换
+
+C++ 有四个用于显式类型转换的表达式。它们被称为 C++ 命名强制转换。命名强制转换是认为是 C++ 中更安全可靠的类型转换方法。它们是：
+
+- static_cast
+- dynamic_cast
+- const_cast
+- reinterpret_cast
+
+###### static_cast
+
+我们使用 static_cast 进行标准类型转换，例如从 float 转换为 int。
+
+```cpp
+--8<-- "docs/cs106L/src/Cast/static_cast.cpp"
+```
+
+###### dynamic_cast
+
+dynamic_cast 主要用于进行多态类型转换，尤其是在处理继承层次结构时。它通常用于需要将基类指针转换为派生类指针的方案。
+
+```cpp
+--8<-- "docs/cs106L/src/Cast/dynamic_cast.cpp"
+```
+
+###### const_cast
+
+const_cast 用于从变量中转换 const 限定符。我们可以使用 const_cast 的一种常见情况是，当使用第三方库时，这些库的函数将非 const 指针作为参数，但我们需要传入 const 数据。
+
+```cpp
+--8<-- "docs/cs106L/src/Cast/const_cast.cpp"
+```
+
+###### reinterpret_cast
+
+reinterpret_cast 用于将一种指针类型转换为另一种指针类型，或将一种引用类型转换为另一种引用类型。
+
+与 static_cast 不同，reinterpret_cast 实际上并不转换数据类型，而是在编译时将一种指针类型重新解释为另一种指针类型。
+
+```cpp
+--8<-- "docs/cs106L/src/Cast/reinterpret_cast.cpp"
+```
+
+**警告**： reinterpret_cast 允许进行几乎任何指针或整数类型转换，而无需进行任何类型安全检查。这可能会导致未定义的行为。因此，应谨慎使用 reinterpret_cast。
 
 #### 统一初始化
 
@@ -1229,20 +1291,19 @@ vector<int> vector3 = {12, 12, 12, 12, 12};
 #### 向量基本操作
 
 ```cpp
---8<-- "docs/cs106L/src/SequenceContainers/vector_op.cpp"
+--8<-- "docs/cs106L/src/Containers/vector_op.cpp"
 ```
 
 向量函数：
 
-
-函数    | 描述 |
-| --- | --- |
-size() ｜ 返回向量中存在的元素数量
-clear() ｜ 删除向量的所有元素
-front() ｜ 返回向量的第一个元素
-back() ｜ 返回向量的最后一个元素
-empty() ｜ 如果向量为空，则返回1 (true)
-capacity() ｜ 检查向量的总体大小
+函数  |  描述
+--- | ---
+size() | 返回向量中存在的元素数量
+clear() | 删除向量的所有元素
+front() | 返回向量的第一个元素
+back() | 返回向量的最后一个元素
+empty() | 如果向量为空，则返回1 (true)
+capacity() | 检查向量的总体大小
 
 
 
@@ -1267,7 +1328,7 @@ vector<double>::iterator iter2;
 ```
 
 ```cpp
---8<-- "docs/cs106L/src/SequenceContainers/vector_iterator.cpp"
+--8<-- "docs/cs106L/src/Containers/vector_iterator.cpp"
 ```
 
 ### 数组
@@ -1281,8 +1342,8 @@ std::array是在<array>标头中定义的，因此我们必须先包含此标头
 std::array<T, N> array_name;
 ```
 
-- T - 要存储的元素类型
-- N - 数组中的元素数量
+- T：要存储的元素类型
+- N：数组中的元素数量
 
 #### 数组初始化
 
@@ -1303,7 +1364,7 @@ std::array<int, 5> marks {10, 20, 30, 40, 50};
 #### 数组基本操作
 
 ```cpp
---8<-- "docs/cs106L/src/SequenceContainers/array_op.cpp"
+--8<-- "docs/cs106L/src/Containers/array_op.cpp"
 ```
 
 更多操作见：[cplusplus array Reference](https://cplusplus.com/reference/array/)
@@ -1311,5 +1372,503 @@ std::array<int, 5> marks {10, 20, 30, 40, 50};
 #### 与 STL 算法组合使用
 
 ```cpp
---8<-- "docs/cs106L/src/SequenceContainers/array_stl_algorithm.cpp"
+--8<-- "docs/cs106L/src/Containers/array_stl_algorithm.cpp"
 ```
+
+### 列表
+
+在C++中，STL列表实现了双向链表数据结构。因此，我们可以向前和向后迭代。要创建列表，我们需要在程序中包含list头文件。
+
+![](./images/cpp-list-implementation.png)
+
+```cpp
+#include <list>
+
+std::list<T> list_name = {value1, value2, ...};
+```
+
+- T：要存储的元素类型
+
+#### 列表初始化
+
+```cpp
+// 通过初始化列表初始化
+// create a list of integer type
+std::list<int> numbers = {1, 2, 3, 4, 5};
+
+// create a list of character type
+std::list<char> vowels = {'a', 'e', 'i', 'o', 'u'};
+
+// 通过统一初始化形式初始化
+std::list<int> numbers {1, 2, 3, 4, 5};
+```
+
+#### 列表基本操作
+
+```cpp
+--8<-- "docs/cs106L/src/Containers/list_op.cpp"
+```
+
+### 双端队列
+
+在C++中，STL deque是一个顺序容器，提供双端队列（double-ended queue）数据结构的功能。
+
+在常规队列中，元素从后面添加，从前面删除。然而，在双端队列中，我们可以从front和back插入和删除元素。
+
+![](./images/cpp-deque.png)
+
+为了在C++中创建双端队列，我们​​首先需要包含deque头文件。
+
+```cpp
+#include <deque>
+```
+
+导入此文件后，我们可以使用以下语法创建deque ：
+
+```
+deque<T> dq;
+```
+
+#### 双端队列初始化
+
+```cpp
+// method 1: initializer list
+deque<int> deque1 = {1, 2, 3, 4, 5};
+
+// method 2: uniform initialization
+deque<int> deque2 {1, 2, 3, 4, 5};
+```
+
+#### 双端队列基本操作
+
+```cpp
+--8<-- "docs/cs106L/src/Containers/deque_op.cpp"
+```
+
+### 前向列表
+
+C++ 前向列表(Forward List)是按严格线性顺序排序的序列容器，您可以在其中以恒定的时间效率添加或删除序列中的任何位置的元素。
+
+转发表中的元素存储有关其下一个元素位置的信息。因此，与数组、向量等容器相比，它们在插入、移动和提取元素方面更加高效。
+
+但是，前向列表不支持直接随机访问。
+
+要创建转发列表，我们必须在代码中包含<forward_list>标头。
+
+```cpp
+#include <forward_list>
+std::forward_list<T> forward_list_name
+```
+
+#### 前向列表基本操作
+
+```cpp
+--8<-- "docs/cs106L/src/Containers/forward_list_op.cpp"
+```
+
+## 关联容器
+
+### 集合
+
+在 C++ 中，集合是保存唯一元素的关联容器。集合中的元素在内部按升序排序。
+集合中的元素是唯一的，并且不支持重复。
+
+要在 C++ 中实现集合，我们必须在程序中包含<set>头文件。
+
+```cpp
+#include <set>
+```
+
+我们可以使用以下语法在 C++ 中创建一个集合：
+
+```cpp
+// declare a set
+std::set<data_type> set_name = {key1, key2, key3, ...};
+```
+
+#### 集合的基本操作
+
+```cpp
+--8<-- "docs/cs106L/src/Containers/set_op.cpp"
+```
+
+### 映射
+
+在 C++ 中，映射是保存数据对的关联容器。这些对（称为键值对）具有唯一的键，而关联的值不必是唯一的。**映射中的元素在内部按其键排序**。
+
+![](./images/cpp-map.png)
+
+为了在 C++ 中使用映射，我们必须在程序中包含map头文件：
+
+```cpp
+#include <map>
+```
+
+我们可以使用以下语法声明一个映射：
+
+```cpp
+std::map<key_type, value_type> map_name = {{key1, value1},{key2, value2}, ...};
+```
+
+创建映射示例：
+
+```cpp
+// create a map with integer keys and string values
+std::map<int, string> student = {{1,"Jacqueline"}, {2,"Blake"}, {3,"Denise"}};
+
+std::map<int, string> student {{1,"Jacqueline"}, {2,"Blake"}, {3,"Denise"}};
+```
+#### 映射基本操作
+
+```cpp
+--8<-- "docs/cs106L/src/Containers/map_op.cpp"
+```
+
+## 容器适配器
+
+### 队列
+
+在C++中，STL queue提供了队列数据结构的功能。队列数据结构遵循FIFO（先进先出）原则，即先添加的元素将先被删除。
+
+![](./images/cpp-queue.png)
+
+为了在C++中创建队列，我们​​首先需要包含queue头文件。
+
+```cpp
+#include <queue>
+```
+
+导入此文件后，我们可以使用以下语法创建queue ：
+
+```cpp
+queue<T> q;
+```
+
+#### 队列基本操作
+
+```cpp
+--8<-- "docs/cs106L/src/Containers/queue_op.cpp"
+```
+
+注意：队列是没有迭代器的。
+
+### 堆栈
+
+STL stack提供了 C++ 中堆栈数据结构的功能。stack数据结构遵循LIFO（后进先出）原则。也就是说，最后添加的元素将首先被删除。
+
+![](./images/cpp-stack.png)
+
+为了在C++中创建堆栈，我们首先需要包含stack头文件。
+
+```cpp
+#include <stack>
+```
+
+导入此文件后，我们可以使用以下语法创建stack ：
+
+```cpp
+stack<T> st;
+```
+
+#### 堆栈基本操作
+
+```cpp
+--8<-- "docs/cs106L/src/Containers/stack_op.cpp"
+```
+
+### 优先级队列
+
+在C++中， priority_queue提供了优先级队列数据结构的功能。优先级队列是一种特殊类型的队列，其中每个元素都与一个优先级值关联，并且根据元素的优先级提供服务。
+
+![](./images/cpp-priority-queue.png)
+
+为了在C++中创建优先级队列，我们​​首先需要包含queue头文件。导入此文件后，我们可以使用以下语法创建一个priority_queue:
+
+```cpp
+#include <queue>
+
+priority_queue<T> pq;
+```
+
+**注意**：默认情况下， priority_queue给予最大的元素最高优先级。
+
+#### 优先级队列基本操作
+
+```cpp
+--8<-- "docs/cs106L/src/Containers/priority_queue_op.cpp"
+```
+
+#### 最小堆优先级队列
+
+我们还可以创建一个最小堆优先级队列（min-heap priority_queue） ，以升序排列元素。其语法为：
+
+```cpp
+priority_queue<T, vector<T>, greater<T>> pq; 
+```
+
+示例：
+
+```cpp
+--8<-- "docs/cs106L/src/Containers/min_heap_priority_queue.cpp"
+```
+
+## 迭代器
+
+迭代器是一个类似指针的对象，表示元素在容器中的位置。它用于迭代容器中的元素。
+
+![向量迭代器](./images/vector-iterator.png)
+
+我们可以使用以下语法定义迭代器：
+
+```cpp
+// create a vector iterator
+vector<int>::iterator vec_itr;
+
+// create a map iterator
+map<char, int>::iterator map_itr;
+```
+
+永远记住，我们不能将迭代器与数据类型不匹配的容器一起使用。例如:
+
+
+```cpp
+// create vector of integer type
+vector<int> num {1, 2, 3};
+
+// Error: itr can only be used with integer vectors
+vector<double>::iterator itr = num.begin();
+```
+
+我们可以在初始化期间使用auto关键字（C++ 11 及以上）来推断迭代器的类型。
+
+```cpp
+vector<string>::iterator itr = languages.begin();
+auto itr = languages.begin(); // 两者等效
+```
+
+### 迭代器基本操作
+
+下表显示了可以在迭代器上执行的一些基本操作:
+
+
+操作 | 描述 
+--- | ---
+*itr |  返回当前位置的元素
+itr->m | 返回迭代器指向的对象的成员值m ，相当于(*itr).m
+++itr |  将迭代器移动到下一个位置
+-–itr |  将迭代器移动到前一个位置
+itr + i |  将迭代器移动i位置
+itr1 == itr2 |  如果迭代器指向的位置相同则返回true
+itr1 != itr2 |  如果迭代器指向的位置不相同，则返回true
+itr = itr1 |  将itr1指向的位置分配给itr迭代器
+
+**注意**：并非上面列出的所有操作都可以在所有类型的迭代器上执行。
+
+### 迭代器类型
+
+C++ 标准模板库提供了五种类型的迭代器。他们是：
+
+- Input Iterator 输入迭代器
+- Output Iterator 输出迭代器
+- Forward Iterator 前向迭代器
+- Bidirectional Iterator 双向迭代器
+- Random-access-iterator 随机访问迭代器
+
+![](./images/cpp-iterator-types.png)
+
+#### 输入迭代器
+
+C++ 输入迭代器能够在向前迭代时读取/处理某些值。我们可以使用++向前迭代，并使用*读取值或使用->读取成员值。
+
+从输入流读取值的迭代器是输入迭代器的一个示例。它可以创建为：
+
+```cpp
+#include <iterator>
+// create an input iterator to read values from cin
+istream_iterator<int> input_itr(cin);
+```
+
+在这里，我们创建了一个名为input_itr的int类型的输入迭代器，它从标准输入流cin读取输入值。
+
+#### 输出迭代器
+
+C++ 输出迭代器能够在向前迭代时写入一些值。我们可以使用++向前迭代并使用*写入值。 =运算符可用于写入值
+
+将值写入输出流的迭代器是输出迭代器的一个示例。
+
+```cpp
+// create an output iterator to write integers to the console
+ostream_iterator<int> output_itr(cout, " ");
+```
+
+在这里，我们创建了一个名为output_itr的int类型的输出迭代器，它将值写入标准输入流cout 。
+
+#### 前向迭代器
+
+C++ 正向迭代器能够在向前迭代时读取/写入一些值。比如forward_list类的迭代器是前向迭代器。
+
+我们可以使用++向前迭代，使用*读写值，或者使用->读写成员值。
+
+```cpp
+--8<-- "docs/cs106L/src/Iterators/forward_iterator.cpp"
+```
+
+#### 双向迭代器
+
+C++ 双向迭代器能够向前和向后迭代。我们可以使用++向前迭代，使用--向后迭代，并使用*读写值或使用->读写成员值。
+
+容器类list 、 set 、 multiset 、 map和multimap的迭代器是双向迭代器。
+
+```cpp
+--8<-- "docs/cs106L/src/Iterators/bidirectional_iterator.cpp"
+```
+
+#### 随机访问迭代器
+
+C++ 随机访问迭代器具有双向迭代器的所有属性以及随机访问。
+
+容器类vector 、 deque 、 array和字符串迭代器的迭代器是随机访问迭代器。
+
+```cpp
+--8<-- "docs/cs106L/src/Iterators/random_access_iterator.cpp"
+```
+
+### 迭代器支持的运算符
+
+如前所述，并非所有运算符都与所有类型的迭代器兼容。可用于不同迭代器的运算符如下表所示。
+
+迭代器类型 |支持的运算符
+--- | ---
+输入迭代器 | `++`, `*`,` ->`, `==`, `!=` 
+输出迭代器 | `++`, `*`, `=`
+前向迭代器 | `++`, `*`, `->`, `==`, `!=`
+双向迭代器 | `++`, `--`, `*`, `->`, `==`, `!=`
+随机访问迭代器 | `++`, `--`, `*`, `->`, `[]`, `+`, `-`, `<`, `<=`, `>`, `>=`, `==`, `!=`
+
+## 算法
+
+算法是C++标准库提供的一组函数，用于在容器对象上执行各种操作。标准模板库 （STL） 提供了一组丰富的算法，可用于执行排序、搜索和操作容器元素（如数组、向量等）等操作。
+
+我们可以使用 `<algorithm>` 文件头访问这些算法。
+
+```cpp
+#include <algorithm>
+```
+
+### 常用算法
+
+C++ 中的 <algorithm> 库提供了许多有用的函数。下面给出了一些最常用的函数。
+
+函数 | 描述
+--- | ---
+sort()  | 对容器的元素进行排序
+copy()  | 复制给定范围内的元素
+move()  | 移动给定的元素范围
+swap() | 交换两个对象的值
+merge() | 合并排序范围
+replace() | 替换元素的值
+remove() | 删除元素
+
+## 函子
+
+C++ 函子（函数对象）是可以像函数一样调用的类或结构对象。它重载了函数调用调用符`()`(function-call operator) 并允许我们使用像函数一样的对象。
+
+我们可以在 C++ 中创建一个函子，如下所示：
+
+```cpp
+class Greet {
+  public:
+    void operator()() {
+      // function body
+    }
+};
+```
+
+在这里，我们重载了函数调用符`()` 。这允许我们调用类对象，就好像它是一个函数一样，如下所示：
+
+```cpp
+// create an instance of Greet
+Greet greet;
+
+// call the object as a function
+greet(); 
+```
+
+**注意**：请记住在重载类的`()`运算符时需设置 public 访问说明符，因为默认情况下，类的成员是私有的。
+
+### 简单的函子
+
+```cpp
+--8<-- "docs/cs106L/src/Functors/functor.cpp"
+```
+
+### 具有返回类型和参数的函子
+
+```cpp
+--8<-- "docs/cs106L/src/Functors/functor_paramter.cpp"
+```
+
+### 具有成员变量的函子
+
+```cpp
+--8<-- "docs/cs106L/src/Functors/functor_member_variable.cpp"
+```
+
+### 预定义函子
+
+们可以通过包含函数头文件来使用标准库提供的预定义函子：
+
+```cpp
+#include <functional>
+```
+
+C++ 为算术运算、关系运算和逻辑运算提供了以下库函子。
+
+#### 算术函子(Arithmetic Functors)
+
+函子 | 描述
+--- | ---
+plus | 返回两个参数的和
+minus  | 返回两个参数的差值
+multiplies | 返回两个参数的乘积
+divides | 返回两个参数除法后的结果
+modulus | 返回两个参数除以后的余数
+negate | 返回参数的 negated 值
+
+#### 关系函子(Relational Functors)
+
+函子 | 描述
+--- | ---
+equal_to | 如果两个参数相等，则返回 true
+not_equal_to | 如果两个参数不相等，则返回 true
+greater | 如果第一个参数大于第二个参数，则返回 true
+greater_equal | 如果第一个参数大于或等于第二个参数，则返回 true
+less  | 如果第一个参数小于第二个参数，则返回 true
+less_equal | 如果第一个参数小于或等于第二个参数，则返回 true
+
+#### 逻辑函子(Logical Functors)
+
+函子 | 描述
+--- | ---
+logical_and | 返回两个布尔值的 Logical AND 运算的结果
+logical_or | 返回两个布尔值的 Logical OR 运算的结果
+logical_not | 返回布尔值的 Logical NOT 运算的结果
+
+#### 位函子(Bitwise Functors)
+
+函子 | 描述
+--- | ---
+bit_and | 返回两个参数的按位 AND 运算结果
+bit_or | 返回两个参数的按位 OR 运算结果
+bit_xor | 返回两个参数的按位 XOR 运算结果
+
+### 预定义函子示例
+
+通常，函子与 C++ STL 一起使用，作为 STL 算法（如 sort、count_if、all_of 等）的参数。
+
+在此示例中，我们将查看预定义的 C++ 函子 `greater<T>()`，其中 T 是具有 STL 算法排序的函子参数的类型。
+
+```cpp
+--8<-- "docs/cs106L/src/Functors/predefined_functor.cpp"
+```
+

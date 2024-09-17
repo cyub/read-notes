@@ -170,6 +170,7 @@ nav:
   - 小说:
       - 遥远的救世主: the-distant-savior/README.md
   - 编程:
+      - "C++并发编程实战（第一版）": cpp-concurrency-in-action/README.md
       - "UNIX网络编程 卷1：套接字联网API": unp-v1/README.md
       - 操作系统导论: ostep/README.md
       - 多处理器编程的艺术: the-art-of-multiprocessor-programming/README.md

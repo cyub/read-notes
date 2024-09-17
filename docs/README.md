@@ -4,6 +4,7 @@
 
 笔记 | 封面 | 类型 | 分类 | 年度
 --- | ---  | --- | --- | ---
+[C++并发编程实践（第一版）](./cpp-concurrency-in-action/) | ![](./images/s28077549.jpg) | 书籍 | 计算机 | 2024
 [UNIX网络编程 卷1：套接字联网API](./unp-v1/) | ![](./images/s4437258.jpg) { width="150" } | 书籍 | 计算机 | 2024
 [操作系统导论](./ostep/) | ![](./images/s32332106.jpg) { width="150" } | 书籍 | 计算机 | 2024
 [遥远的救世主](./the-distant-savior/) | ![](./images/c7d563e0e6b911ea8d4b066ed4ba7ee1.png) { width="150" } | 书籍 | 小说 | 2024

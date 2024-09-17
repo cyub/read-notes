@@ -13,6 +13,8 @@ hide:
 
 **第三方笔记（第二版）**：https://github.com/downdemo/Cpp-Concurrency-in-Action-2ed
 
+**学习C++11/14**: http://www.bogotobogo.com/cplusplus/C11
+
 
 ## chap1: 你好，C++的并发世界
 

@@ -4,6 +4,7 @@
 
 笔记 | 封面 | 类型 | 分类 | 年度
 --- | ---  | --- | --- | ---
+[深度学习入门](./deep-learning-from-scratch/) | ![](./images/s29815955.jpg) | 书籍 | 计算机 | 2024 
 [C++并发编程实战（第一版）](./cpp-concurrency-in-action/) | ![](./images/s28077549.jpg) | 书籍 | 计算机 | 2024
 [UNIX网络编程 卷1：套接字联网API](./unp-v1/) | ![](./images/s4437258.jpg) { width="150" } | 书籍 | 计算机 | 2024
 [操作系统导论](./ostep/) | ![](./images/s32332106.jpg) { width="150" } | 书籍 | 计算机 | 2024

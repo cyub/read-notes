@@ -129,6 +129,12 @@ ret = pthread_attr_init(&attr);
 ret = pthread_create(&tid, &attr, start_routine, arg);
 ```
 
+示例代码：
+
+```c
+--8<-- "docs/multithreaded-programming-guide/src/pthread_create.c"
+```
+
 ### 等待线程终止
 
 `pthread_join()` 函数会一直阻塞调用线程，直到指定的线程终止。
@@ -141,6 +147,13 @@ int pthread_join(pthread_t thread, void **retval);
 
 - 指定的线程 thread 必须位于当前的进程中，而且不得是分离线程。
 - 当 status 不是 NULL 时，status 指向某个位置，在 `pthread_join()` 成功返回时，将该位置设置为已终止线程的退出状态。
+
+线程通过 `pthread_create()` 创建后，有可能会立即执行，此后我们依旧可以通过 `pthread_join()` 来获取线程状态信息。`pthread_join()` 的行为如下：
+
+- 如果目标线程还在运行，`pthread_join()` 会 阻塞，直到该线程结束。
+- 如果目标线程已经结束，`pthread_join()` 仍然可以成功回收它的资源（因为线程的状态会保留，直到 `pthread_join()` 调用）。
+- 线程的资源不会 立即 被销毁，而是一直保持，直到 `pthread_join()` 被调用（或使用 pthread_detach() ）。
+- 只有 `pthread_join()`（或者 `pthread_detach()`）才能回收线程的资源，否则可能导致 内存泄漏（此时线程变成了变为“僵尸线程”）。
 
 ### 分离线程
 
@@ -163,12 +176,19 @@ pthread_create(&thread, &attr, thread_function, NULL);
 使用场景：
 
 1. 避免资源泄漏：
-    
-    如果线程是可加入的（默认状态），线程结束后，其资源不会自动释放，直到其他线程调用 pthread_join()。如果忘记调用 pthread_join()，线程的资源（如栈空间、线程描述符等）将一直占用，可能导致资源泄漏。
-        使用 pthread_detach() 可以让线程在结束时自动释放资源，避免资源泄漏。
+
+    如果线程是可加入的（默认状态），线程结束后，其资源不会自动释放，直到其他线程调用 `pthread_join()`。如果忘记调用 `pthread_join()`，线程的资源（如栈空间、线程描述符等）将一直占用，可能导致资源泄漏。
+        - 使用 `pthread_detach()` 可以让线程在结束时自动释放资源，避免资源泄漏。
+
 2. 简化线程管理：
     
-    对于一些不需要同步结果的线程，或者线程的生命周期较短，使用分离线程可以简化线程管理，无需手动调用 pthread_join()。
+    对于一些不需要同步结果的线程，或者线程的生命周期较短，使用分离线程可以简化线程管理，无需手动调用 `pthread_join()`。
+
+代码示例：
+
+```c
+--8<-- "docs/multithreaded-programming-guide/src/pthread_detach.c"
+```
 
 ### 获取线程标识符
 
@@ -229,6 +249,12 @@ int pthread_setschedparam(pthread_t thread, int policy,
 
 int pthread_getschedparam(pthread_t thread, int *policy,
                             struct sched_param *param);
+```
+
+示例：
+
+```c
+--8<-- "docs/multithreaded-programming-guide/src/pthread_setschedparam.c"
 ```
 
 ### 向线程发送信号

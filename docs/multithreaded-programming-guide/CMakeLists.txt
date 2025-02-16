@@ -7,6 +7,7 @@ set(SOURCE_FILES
     pthread_create.c
     pthread_detach.c
     pthread_setschedparam.c
+    pthread_default_attr.c
 )
 
 # 遍历源文件列表，为每个源文件添加可执行目标

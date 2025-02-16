@@ -239,6 +239,7 @@ int pthread_setschedparam(pthread_t thread, int policy,
 - const struct sched_param *param：指向 sched_param 结构的指针，用于传递具体的调度参数，主要是线程的优先级。在 SCHED_FIFO 和 SCHED_RR 策略下，优先级范围通常是 1（最低）到 99（最高）。
 
 **返回值**：
+
 - 成功时返回 0。
 - 失败时返回错误码（非零值），例如权限不足或参数无效。
 
@@ -421,3 +422,91 @@ void pthread_cleanup_pop(int execute);
 
 ## Chap3 线程属性
 
+### 初始化属性
+
+`pthread_attr_init()` 将对象属性初始化为其缺省值。存储空间是在执行期间由线程系统分配的。
+
+```c
+#include <pthread.h>
+
+int pthread_attr_init(pthread_attr_t *attr);
+```
+
+以下是使用 `pthread_attr_init` 初始化线程属性时的缺省值表格。这些值基于 **POSIX 标准** 和常见实现（如 Linux），但具体默认值可能因操作系统而异：
+
+| 属性               | 默认值                          | 说明                                                                 |
+|------------------------|------------------------------------|--------------------------------------------------------------------------|
+| 分离状态 (`detachstate`)         | `PTHREAD_CREATE_JOINABLE`         | 线程默认可被连接（需调用 `pthread_join` 回收资源）。                       |
+| 调度策略 (`schedpolicy`)         | `SCHED_OTHER`                     | 分时调度策略（普通线程的默认策略）。                                         |
+| 调度参数 (`schedparam`)          | `sched_priority = 0`              | 对于 `SCHED_OTHER` 策略，优先级为 0（用户不可调整）。                       |
+| 继承调度策略 (`inheritsched`)    | `PTHREAD_INHERIT_SCHED`           | 继承创建线程的调度策略，而非使用属性对象中设置的值。                           |
+| 作用域 (`scope`)                | `PTHREAD_SCOPE_SYSTEM`            | 线程在系统范围内竞争 CPU 资源（与进程外线程竞争）。                           |
+| 栈大小 (`stacksize`)            | 系统定义（如 Linux 默认 8 MiB）    | 栈大小由实现决定，通常可通过 `PTHREAD_STACK_MIN` 查询最小值。                 |
+| 栈地址 (`stackaddr`)            | `NULL`                            | 系统自动分配栈内存，用户通常无需指定。                                       |
+| 警戒区大小 (`guardsize`)        | 系统页大小（如 4 KiB）             | 用于检测栈溢出的保护区域大小，设为 0 表示禁用保护。                           |
+
+**注意事项**：
+
+1. 系统差异性：
+
+    默认值可能因操作系统或版本不同而变化（如栈大小在 32/64 位系统中的差异）。
+
+2. 动态查询：
+   
+    可通过 `pthread_attr_getxxx` 系列函数（如 `pthread_attr_getdetachstate`）动态获取当前属性值。
+
+3. 优先级限制：
+
+    `SCHED_OTHER` 策略下优先级固定为 0，仅 `SCHED_FIFO`/`SCHED_RR` 支持调整优先级。
+
+4. 栈管理：
+
+    手动设置 `stackaddr` 和 `stacksize` 需谨慎，避免栈溢出或内存冲突。
+
+下面是获取线程默认属性的示例：
+
+```c
+--8<-- "docs/multithreaded-programming-guide/src/pthread_default_attr.c"
+```
+
+上面代码输出以下内容：
+
+```bash
+分离状态 (detachstate): JOINABLE
+调度策略 (schedpolicy): SCHED_OTHER
+调度优先级 (schedparam): 31
+继承调度策略 (inheritsched): INHERIT
+作用域 (scope): SYSTEM
+栈大小 (stacksize): 524288 bytes (0.50 MiB)
+栈地址 (stackaddr): 系统自动分配
+警戒区大小 (guardsize): 16384 bytes (16.00 KiB)
+```
+
+### 销毁属性
+
+```c
+#include <pthread.h>
+
+int pthread_attr_destroy(pthread_attr_t *attr);
+```
+
+### 设置分离状态
+
+如果创建分离线程 (PTHREAD_CREATE_DETACHED)，则该线程一退出，便可重用其线程 ID 和其他资源。
+
+```c
+#include <pthread.h>
+
+int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate);
+```
+
+### 获取分离状态
+
+使用 `pthread_attr_getdetachstate()` 可以检索线程创建状态（可以为分离或连接）。
+
+```c
+#include <pthread.h>
+
+int pthread_attr_getdetachstate(const pthread_attr_t *attr,
+                                       int *detachstate);
+```

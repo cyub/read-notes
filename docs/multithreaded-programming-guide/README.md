@@ -510,3 +510,331 @@ int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate);
 int pthread_attr_getdetachstate(const pthread_attr_t *attr,
                                        int *detachstate);
 ```
+
+### 设置栈溢出保护区大小
+
+```c
+ #include <pthread.h>
+
+int pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize);
+```
+
+`pthread_attr_setguardsize()` 用于设置线程属性对象中的 警戒区大小（guard size）。警戒区是线程栈末尾预留的一段特殊内存区域，其核心目的是：
+
+- 防止栈溢出破坏内存
+    
+    当线程的栈空间耗尽时（例如递归过深或局部变量过大），警戒区会作为“缓冲地带”被优先覆盖。操作系统或线程库可以通过内存保护机制（如触发 SIGSEGV 信号）检测到对警戒区的非法访问，从而避免栈溢出破坏其他内存区域（如堆或全局变量）。
+
+- 提高程序健壮性
+    
+    通过提前发现栈溢出，开发者可以调试代码或采取恢复措施，避免程序因内存损坏而崩溃。
+
+注意事项：
+
+- 警戒区大小的对齐
+    
+    警戒区大小通常会被系统自动调整为 内存页大小的整数倍。例如：
+
+    - 若系统页大小为 4 KiB（4096 字节），设置 guardsize=5000 会被调整为 8 KiB（8192 字节）。
+
+    - 可通过 sysconf(_SC_PAGESIZE) 获取系统页大小。
+
+2. 设置为 0 的含义
+
+    ```c
+    pthread_attr_setguardsize(&attr, 0); // 禁用警戒区
+    ```
+    - 禁用警戒区后，栈溢出可能无法被检测，程序可能直接覆盖其他内存区域，导致不可预知的崩溃或数据损坏。
+
+    - 仅在需要精确控制栈内存时使用（如实时系统），并确保代码不会发生栈溢出。
+
+3. 默认警戒区大小
+
+    - 默认值通常为系统页大小（如 4 KiB），可通过 pthread_attr_getguardsize 查询。
+
+    - 默认值可能因操作系统或线程库版本不同而变化。
+
+4. 与栈地址和栈大小的关系
+
+    - 若手动指定了线程栈地址（pthread_attr_setstackaddr），警戒区可能被自动禁用。
+
+    - 设置的栈大小（pthread_attr_setstacksize）应远大于警戒区，否则可能导致可用栈空间不足。
+
+示例代码：
+
+```c
+--8<-- "docs/multithreaded-programming-guide/src/pthread_attr_setguardsize.c"
+```
+
+### 获取栈溢出保护区大小
+
+```c
+#include <pthread.h>
+
+int pthread_attr_getguardsize(const pthread_attr_t *attr,
+                                     size_t *guardsize);
+```
+
+### 设置线程的争用范围
+
+`pthread_attr_setscope()` 用于设置线程的 作用域（scope），即线程在竞争 CPU 资源时的调度范围。它决定了线程是与系统中所有线程竞争 CPU（系统级），还是仅与同一进程内的线程竞争 CPU（进程级）。具体参数如下：
+
+作用域类型 | 说明
+--- | ---
+PTHREAD_SCOPE_SYSTEM | 线程在系统范围内竞争 CPU（与所有进程的线程竞争，依赖操作系统的全局调度）
+PTHREAD_SCOPE_PROCESS | 线程仅在进程内竞争 CPU（由进程自行管理线程调度，需用户态调度器支持）
+
+```c
+#include <pthread.h>
+
+int pthread_attr_setscope(pthread_attr_t *attr, int scope);
+```
+
+示例代码：
+
+```c
+--8<-- "docs/multithreaded-programming-guide/src/pthread_attr_setscope.c"
+```
+
+### 获取线程的争用范围
+
+```c
+#include <pthread.h>
+
+int pthread_attr_getscope(const pthread_attr_t *attr, int *scope);
+```
+
+### 设置线程并行级别
+
+```c
+#include <pthread.h>
+
+int pthread_setconcurrency(int new_level);
+```
+
+### 获取线程并行级别
+
+```c
+#include <pthread.h>
+
+int pthread_getconcurrency(void);
+```
+
+### 设置调度策略
+
+POSIX 规定了 3 种调度策略：
+调度策略 | 说明
+--- | ---
+SCHED_OTHER	| 默认调度策略，适用于大多数普通线程，时间片轮转（time-sharing）。
+SCHED_FIFO	| 实时调度策略，先来先执行，高优先级线程不主动让出 CPU，适用于低延迟任务。
+SCHED_RR	| 实时轮转调度，与 SCHED_FIFO 类似，但线程按固定时间片轮转。
+
+- SCHED_OTHER 是 **非实时** 调度策略，而 SCHED_FIFO 和 SCHED_RR 是 **实时** 调度策略。
+- 使用 SCHED_FIFO 和 SCHED_RR 需要 root 权限（普通用户可能会失败）。
+
+```c
+#include <pthread.h>
+
+int pthread_attr_setschedpolicy(pthread_attr_t *attr, int policy);
+```
+
+参数说明：
+
+- attr：指向一个 pthread_attr_t 结构体，表示线程的属性。
+- policy：指定线程的调度策略，常见值：
+    - SCHED_OTHER（默认）
+    - SCHED_FIFO（先来先服务调度）
+    - SCHED_RR（轮转调度）
+
+返回值：
+
+- 成功 返回 0。
+- 失败 返回 EINVAL（无效参数）等错误码。
+
+
+### 获取调度策略
+
+```c
+#include <pthread.h>
+
+int pthread_attr_getschedpolicy(const pthread_attr_t *attr, int *policy);
+```
+
+### 设置继承的调度策略
+
+```c
+#include <pthread.h>
+
+int pthread_attr_setinheritsched(pthread_attr_t *attr,
+                                        int inheritsched);
+int pthread_attr_getinheritsched(const pthread_attr_t *attr,
+                                        int *inheritsched);
+```
+
+### 设置继承的调度策略
+
+```c
+#include <pthread.h>
+
+int pthread_attr_getinheritsched(const pthread_attr_t *attr,
+                                        int *inheritsched);
+```
+
+### 设置调度参数
+
+```c
+#include <pthread.h>
+
+int pthread_attr_setschedparam(pthread_attr_t *attr,
+                                      const struct sched_param *param);
+```
+
+### 获取调度参数
+
+```c
+#include <pthread.h>
+
+int pthread_attr_getschedparam(const pthread_attr_t *attr,
+                                      struct sched_param *param);
+```
+
+### 设置线程的 CPU 亲和性
+
+```c
+#define _GNU_SOURCE             /* See feature_test_macros(7) */
+#include <pthread.h>
+
+int pthread_setaffinity_np(pthread_t thread, size_t cpusetsize,
+                                  const cpu_set_t *cpuset);
+```
+
+`pthread_setaffinity_np` 是 POSIX 线程库中的一个非可移植（_np 表示 "non-portable"）函数，用于设置线程的 CPU 亲和性（CPU Affinity），即将线程绑定到特定的 CPU 核心上运行。通过限制线程在指定核心上执行，可以减少上下文切换的开销、提高缓存命中率，从而优化性能（尤其在多核 CPU 的密集计算场景）。
+
+作用: 
+
+- 减少上下文切换
+
+    线程固定在某个核心上运行，避免频繁切换核心导致的缓存失效。
+
+- 隔离资源竞争
+
+    在多线程/多进程环境中，绑定核心可以避免不同线程争抢同一核心的资源。
+
+- 实时性要求
+
+    实时系统中，确保关键线程独占核心，减少调度延迟。
+
+示例代码：
+
+```c
+--8<-- "docs/multithreaded-programming-guide/src/pthread_setaffinity_np.c"
+```
+
+上面代码是否生效验证方式：
+
+- 查看线程的 CPU 亲和性
+
+使用 taskset 命令查看线程的绑定情况：
+
+```bash
+# 获取线程 PID（假设主程序名为 affinity_demo）
+ps -eLf | grep affinity_demo
+
+# 查看线程的 CPU 亲和性（替换为实际 PID）
+taskset -cp <PID>
+```
+
+- 实时监控 CPU 占用
+
+使用 htop 或 top 观察线程的 CPU 使用情况：
+
+1. 运行程序后，打开 htop。
+2. 按 `F2` 进入进程视图，启用 “显示自定义线程名称”。
+3. 观察线程是否固定在指定核心（如 CPU 1）运行。
+
+注意事项：
+
+- 权限要求
+
+    - 在 Linux 中，普通用户可能需要 CAP_SYS_NICE 权限才能修改 CPU 亲和性。
+
+    - 以 sudo 运行程序或调整权限：
+
+        ```shell
+        sudo setcap cap_sys_nice+ep ./affinity_demo
+        ```
+
+- 核心编号范围
+
+    - CPU 编号从 0 开始，最大值可通过 nproc --all 或 lscpu 查询。
+
+    - 若设置超出范围的 CPU 编号，pthread_setaffinity_np 会返回 EINVAL。
+
+### 获取线程的 CPU 亲和性
+
+```c
+#define _GNU_SOURCE             /* See feature_test_macros(7) */
+#include <pthread.h>
+
+int pthread_getaffinity_np(pthread_t thread, size_t cpusetsize,
+                                  cpu_set_t *cpuset);
+```
+
+### 关于栈
+
+通常，线程栈是从页边界开始的。任何指定的大小都被向上舍入到下一个页边界。不具备访问权限的页将被附加到栈的溢出端。大多数栈溢出都会导致将 SIGSEGV 信号发送到违例线程。将直接使用调用方分配的线程栈，而不进行修改。
+
+指定栈时，还应使用 PTHREAD_CREATE_JOINABLE 创建线程。在该线程的 `pthread_join()` 调用返回之前，不会释放该栈。在该线程终止之前，不会释放该线程的栈。了解这类线程是否已终止的唯一可靠方式是使用 `pthread_join()`。 
+
+#### 为线程分配栈空间
+
+一般情况下，不需要为线程分配栈空间。系统会为每个线程的栈分配 默认的虚拟内存，而不保留任何交换空间。系统将使用 mmap() 的 MAP_NORESERVE 选项来进行分配。
+
+系统创建的每个线程栈都具有红色区域。系统通过将页附加到栈的溢出端来创建红色区域，从而捕获栈溢出。此类页无效，而且会导致内存（访问时）故障。红色区域将被附加到所有自动分配的栈，无论大小是由应用程序指定，还是使用缺省大小。 
+
+#### 生成自己的栈
+
+指定线程栈大小时，必须考虑被调用函数以及每个要调用的后续函数的分配需求。需要考虑的因素应包括调用序列需求、局部变量和信息结构。
+
+有时，您需要与缺省栈略有不同的栈。典型的情况是，线程需要的栈大小大于缺省栈大小。而不太典型的情况是，缺省大小太大。您可能正在使用不足的虚拟内存创建数千个线程，进而处理数千个缺省线程栈所需的数千兆字节的栈空间。
+
+对栈的最大大小的限制通常较为明显，但对其最小大小的限制如何呢？必须存在足够的栈空间来处理推入栈的所有栈帧，及其局部变量等。
+
+要获取对栈大小的绝对最小限制，请调用宏 PTHREAD_STACK_MIN。PTHREAD_STACK_MIN 宏将针对执行 NULL 过程的线程返回所需的栈空间量。有用的线程所需的栈大小大于最小栈大小，因此缩小栈大小时应非常谨慎。 
+
+### 设置栈大小
+
+```c
+#include <pthread.h>
+
+int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize);
+```
+
+### 获取栈大小
+
+```c
+#include <pthread.h>
+
+int pthread_attr_getstacksize(const pthread_attr_t *attr,
+                                     size_t *stacksize);
+```
+
+### 设置栈地址和大小
+
+```c
+ #include <pthread.h>
+
+int pthread_attr_setstack(pthread_attr_t *attr,
+                                 void *stackaddr, size_t stacksize);
+```
+
+stackaddr 属性定义线程栈的基准（低位地址）。stacksize 属性指定栈的大小。如果将 stackaddr 设置为非空值，而不是缺省的 NULL，则系统将在该地址初始化栈，假设大小为 stacksize。
+
+### 获取栈地址和大小
+
+```c
+#include <pthread.h>
+
+int pthread_attr_getstack(const pthread_attr_t *attr,
+                                 void **stackaddr, size_t *stacksize);
+```

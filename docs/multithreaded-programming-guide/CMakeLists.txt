@@ -8,6 +8,9 @@ set(SOURCE_FILES
     pthread_detach.c
     pthread_setschedparam.c
     pthread_default_attr.c
+    pthread_attr_setguardsize.c
+    pthread_attr_setscope.c
+    # pthread_setaffinity_np.c
 )
 
 # 遍历源文件列表，为每个源文件添加可执行目标

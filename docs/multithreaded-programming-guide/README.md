@@ -838,3 +838,81 @@ stackaddr 属性定义线程栈的基准（低位地址）。stacksize 属性指
 int pthread_attr_getstack(const pthread_attr_t *attr,
                                  void **stackaddr, size_t *stacksize);
 ```
+
+## Chap4 用同步对象编程
+
+**同步对象** 是内存中的变量，可以按照与访问数据完全相同的方式对其进行访问。不同进程中的线程可以通过放在由线程控制的共享内存中的同步对象互相通信。尽管不同进程中的线程通常互不可见，但这些线程仍可以互相通信。同步对象还可以放在文件中。同步对象可以比创建它的进程具有更长的生命周期。
+
+同步对象具有以下可用类型：
+
+- 互斥锁
+
+- 条件变量
+
+- 读写锁
+
+- 信号
+
+同步的作用包括以下方面：
+
+- **同步是确保共享数据一致性的唯一方法**。
+
+- 两个或多个进程中的线程可以合用一个同步对象。由于重新初始化同步对象会将对象的状态设置为解除锁定，因此应仅由其中的一个协作进程来初始化同步对象。
+
+- 同步可确保可变数据的安全性。
+
+- 进程可以映射文件并指示该进程中的线程获取记录锁。一旦获取了记录锁，映射此文件的任何进程中尝试获取该锁的任何线程都会被阻塞，直到释放该锁为止。
+
+- 访问一个基本类型变量（如整数）时，可以针对一个内存负荷使用多个存储周期。如果整数没有与总线数据宽度对齐或者大于数据宽度，则会使用多个存储周期。
+
+### 互斥锁
+
+使用互斥锁（互斥）可以使线程按顺序执行。通常，互斥锁通过确保一次只有一个线程执行代码的临界段来同步多个线程。互斥锁还可以保护单线程代码。
+
+要更改缺省的互斥锁属性，可以对属性对象进行声明和初始化。通常，互斥锁属性会设置在应用程序开头的某个位置，以便可以快速查找和轻松修改。
+
+#### 初始化互斥锁属性对象
+
+```c
+#include <pthread.h>
+
+int pthread_mutexattr_init(pthread_mutexattr_t *attr);
+```
+
+#### 销毁互斥锁属性对象
+
+```c
+#include <pthread.h>
+
+int pthread_mutexattr_destroy(pthread_mutexattr_t *attr);
+```
+
+#### 设置互斥锁的范围
+
+```c
+#include <pthread.h>
+
+int pthread_mutexattr_setpshared(pthread_mutexattr_t *attr,
+                                        int pshared);
+```
+
+参数说明：
+
+-   attr：指向互斥锁属性对象的指针，该对象通过 pthread_mutexattr_init 初始化。
+-   pshared：指定互斥锁的共享属性，取值可以是：
+    - PTHREAD_PROCESS_PRIVATE：互斥锁仅在创建它的进程内有效（默认值）。
+    - PTHREAD_PROCESS_SHARED：互斥锁可以在多个进程之间共享（需配合共享内存使用）。并不是所有的系统都支持 PTHREAD_PROCESS_SHARED 属性。在使用之前，需要检查系统是否支持该特性。
+
+返回值：
+
+- 成功时返回 0。
+- 失败时返回错误码。
+
+#### 获取互斥锁的范围
+
+```c
+#include <pthread.h>
+
+int pthread_mutexattr_getpshared(const pthread_mutexattr_t *attr,
+                                        int *pshared);
+```

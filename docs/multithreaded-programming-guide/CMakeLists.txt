@@ -10,7 +10,8 @@ set(SOURCE_FILES
     pthread_default_attr.c
     pthread_attr_setguardsize.c
     pthread_attr_setscope.c
-    # pthread_setaffinity_np.c
+    # pthread_setaffinity_np.c // mac下面无法运行
+    mutex_share.c
 )
 
 # 遍历源文件列表，为每个源文件添加可执行目标

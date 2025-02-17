@@ -908,6 +908,12 @@ int pthread_mutexattr_setpshared(pthread_mutexattr_t *attr,
 - 成功时返回 0。
 - 失败时返回错误码。
 
+示例：不同进程间使用共享锁
+
+```c
+--8<-- "docs/multithreaded-programming-guide/src/mutex_share.c"
+```
+
 #### 获取互斥锁的范围
 
 ```c

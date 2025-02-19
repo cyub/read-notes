@@ -922,3 +922,104 @@ int pthread_mutexattr_setpshared(pthread_mutexattr_t *attr,
 int pthread_mutexattr_getpshared(const pthread_mutexattr_t *attr,
                                         int *pshared);
 ```
+
+#### 设置互斥锁类型的属性
+
+```c
+#include <pthread.h>
+
+int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type);
+```
+
+参数说明：
+
+- attr：指向互斥锁属性对象的指针（需已初始化）。
+
+- type：要设置的互斥锁类型（见下文）。
+
+返回值：
+
+- 成功返回 0；
+
+- 失败返回错误码（如 EINVAL 表示无效参数）。
+
+**互斥锁类型（type 可选值）** 如下：
+
+类型值	|  说明
+--- | ---
+PTHREAD_MUTEX_NORMAL | 默认类型：无死锁检测和错误检查。重复加锁会导致未定义行为（通常死锁）。
+PTHREAD_MUTEX_RECURSIVE	| 递归锁：允许同一线程多次加锁，每次加锁必须对应相同次数的解锁。
+PTHREAD_MUTEX_ERRORCHECK | 错误检查锁：禁止同一线程重复加锁，尝试重复加锁会立即返回 EDEADLK 错误。
+PTHREAD_MUTEX_DEFAULT | 系统默认实现：行为可能因平台而异（通常等同于 PTHREAD_MUTEX_NORMAL）。
+
+**锁类型说明**：
+
+- 递归锁（PTHREAD_MUTEX_RECURSIVE）
+    - 同一线程可重复加锁，但必须解锁相同次数才能真正释放锁。
+    - 适用于函数递归调用或嵌套访问共享资源的场景。
+
+- 错误检查锁（PTHREAD_MUTEX_ERRORCHECK）
+    - 若同一线程尝试重复加锁，会立即返回 EDEADLK 错误，避免死锁。
+    - 调试时非常有用，可快速定位代码逻辑错误。
+
+- 普通锁（PTHREAD_MUTEX_NORMAL）
+    - 无任何检查，重复加锁会导致未定义行为（通常死锁）。
+    - 性能较高，但需开发者自行确保逻辑正确。
+
+示例：
+
+```c
+--8<-- "docs/multithreaded-programming-guide/src/pthread_mutex_recursive.c"
+```
+
+#### 获取互斥锁的类型属性
+
+```c
+#include <pthread.h>
+
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *restrict attr,
+           int *restrict type);
+```
+
+#### 设置互斥锁的优先级协议
+
+`pthread_mutexattr_setprotocol()` 是 POSIX 线程库中用于设置互斥锁（mutex）的 优先级协议（Priority Protocol） 的函数，主要目的是在多线程实时系统中防止 优先级反转（Priority Inversion）。
+
+**优先级反转问题**：
+
+当低优先级线程持有锁时，高优先级线程可能被阻塞，而中等优先级线程可能抢占低优先级线程，导致高优先级线程长时间无法执行。这种问题在实时系统中可能导致严重后果。
+
+**解决方案**：
+
+通过设置互斥锁的优先级协议，调整线程的优先级，确保高优先级线程能尽快获得锁。
+
+```c
+#include <pthread.h>
+
+int pthread_mutexattr_setprotocol(pthread_mutexattr_t *attr,
+           int protocol);
+```
+
+参数说明：
+
+- attr：已初始化的互斥锁属性对象。
+- protocol：协议类型
+
+返回值：
+
+- 成功返回 0；
+- 失败返回错误码（如 ENOTSUP 表示系统不支持该协议）。
+
+protocol 可选值如下：
+
+协议类型	|  说明
+--- | ---
+PTHREAD_PRIO_NONE	| 默认：不启用优先级继承或保护（可能发生优先级反转）。
+PTHREAD_PRIO_INHERIT	| 优先级继承：低优先级线程持有锁时，继承高优先级线程的优先级。
+PTHREAD_PRIO_PROTECT	|  优先级天花板：线程持有锁时，优先级提升到预设的固定天花板值。
+
+代码示例：
+
+```c
+--8<-- "docs/multithreaded-programming-guide/src/pthread_prio_inherit.c"
+```

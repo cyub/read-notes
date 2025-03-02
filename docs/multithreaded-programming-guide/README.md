@@ -983,7 +983,7 @@ int pthread_mutexattr_gettype(const pthread_mutexattr_t *restrict attr,
 
 #### 设置互斥锁的优先级协议
 
-`pthread_mutexattr_setprotocol()` 是 POSIX 线程库中用于设置互斥锁（mutex）的 优先级协议（Priority Protocol） 的函数，主要目的是在多线程实时系统中防止 优先级反转（Priority Inversion）。
+`pthread_mutexattr_setprotocol()` 是 POSIX 线程库中用于设置互斥锁（mutex）的 优先级协议（Priority Protocol） 的函数，主要目的是在多线程实时系统中防止 **优先级反转（Priority Inversion）**。
 
 **优先级反转问题**：
 
@@ -1012,14 +1012,141 @@ int pthread_mutexattr_setprotocol(pthread_mutexattr_t *attr,
 
 protocol 可选值如下：
 
-协议类型	|  说明
---- | ---
-PTHREAD_PRIO_NONE	| 默认：不启用优先级继承或保护（可能发生优先级反转）。
-PTHREAD_PRIO_INHERIT	| 优先级继承：低优先级线程持有锁时，继承高优先级线程的优先级。
-PTHREAD_PRIO_PROTECT	|  优先级天花板：线程持有锁时，优先级提升到预设的固定天花板值。
+协议类型	| 名称 |  说明
+--- | --- | ---
+PTHREAD_PRIO_NONE	| 默认 | 不启用优先级继承或保护（可能发生优先级反转）。
+PTHREAD_PRIO_INHERIT	| 优先级继承（Priority Inheritance） | 低优先级线程持有锁时，继承高优先级线程的优先级。
+PTHREAD_PRIO_PROTECT	|  优先级天花板（Priority Ceiling） | 线程持有锁时，优先级提升到预设的固定天花板值。
 
 代码示例：
 
 ```c
 --8<-- "docs/multithreaded-programming-guide/src/pthread_prio_inherit.c"
+```
+
+#### 获取互斥锁的优先级协议
+
+```c
+#include <pthread.h>
+
+int pthread_mutexattr_getprotocol(const pthread_mutexattr_t
+           *restrict attr, int *restrict protocol);
+```
+
+#### 设置互斥锁的优先级上限
+
+设置互斥锁的优先级天花板值。主要用于实时系统（Real-Time Systems）中解决 **优先级反转（Priority Inversion）** 问题。
+
+**优先级天花板（Priority Ceiling）** 是一种避免优先级反转的机制。当一个线程持有互斥锁时，其优先级会被临时提升到锁的“天花板优先级”（即预先设定的最高优先级），以防止低优先级线程持有锁时被中优先级线程抢占，从而导致高优先级线程被阻塞。
+
+使用条件：
+
+- **互斥锁类型**：这两个函数仅对通过 PTHREAD_PRIO_PROTECT 属性初始化的互斥锁有效（即优先级天花板协议）。
+
+- **实时系统支持**：通常需要系统支持实时调度策略（如 SCHED_FIFO 或 SCHED_RR）。
+
+```c
+#include <pthread.h>
+
+int pthread_mutex_setprioceiling(pthread_mutex_t *restrict mutex,
+    int prioceiling, int *restrict old_ceiling);
+```
+
+参数说明：
+
+- mutex：指向目标互斥锁的指针。
+
+- prioceiling：新的优先级天花板值（必须是一个合法的优先级值）。
+
+- old_ceiling：用于返回旧的优先级天花板值（可为 NULL）。
+
+返回值：
+
+- 成功返回 0，失败返回错误码（如 EINVAL、EPERM）。
+
+代码示例：
+
+```c
+--8<-- "docs/multithreaded-programming-guide/src/pthread_mutex_setprioceiling.c"
+```
+
+##### 优先级继承 与 优先级天花板
+
+两者都可以用于解决优先级反转问题，但优先级天花板更严格，它要求锁的优先级 ceiling 必须大于等于当前线程的优先级，否则将返回错误。
+
+机制 | 作用
+--- | ---
+优先级继承 | 动态提升持有锁的线程的优先级到等待线程的最高优先级
+优先级天花板 | 直接为锁指定一个固定的最高优先级，持有锁的线程自动提升到此优先级
+
+#### 获取互斥锁的优先级上限
+
+获取互斥锁当前的优先级天花板值。
+
+```c
+ #include <pthread.h>
+
+int pthread_mutex_setprioceiling(pthread_mutex_t *restrict mutex,
+    int prioceiling, int *restrict old_ceiling);
+```
+
+参数说明：
+
+- mutex：指向目标互斥锁的指针。
+
+- prioceiling：用于返回当前优先级天花板值。
+
+返回值：
+
+- 成功返回 0，失败返回错误码。
+
+#### 设置互斥锁的 健壮性（Robustness） 属性
+
+设置互斥锁的 **健壮性（Robustness）** 属性。其核心目的是解决 持有互斥锁的线程意外终止（如崩溃）时可能导致的 死锁 或 数据不一致 问题。
+
+健壮性（Robustness）的作用：当一个线程持有互斥锁时，若该线程意外终止（如段错误、主动调用 pthread_exit 等），其他等待该锁的线程可能会永久阻塞（死锁）。
+健壮互斥锁（Robust Mutex） 允许系统检测到这种情况，并让等待线程以可控的方式处理锁的状态，避免死锁。
+
+```c
+#include <pthread.h>
+
+int pthread_mutexattr_setrobust(const pthread_mutexattr_t *attr,
+                                       int robustness);
+```
+
+参数说明：
+
+- attr：指向互斥锁属性对象的指针。
+
+- robust：健壮性模式，可选值：
+
+    - PTHREAD_MUTEX_STALLED（默认）：不处理线程终止后的锁状态，可能导致死锁。
+
+    - PTHREAD_MUTEX_ROBUST：启用健壮性，线程终止后，其他线程可获取锁并处理不一致状态。
+
+返回值：
+
+- 成功返回 0。
+
+- 失败返回错误码（如 EINVAL）。
+
+当线程获取一个健壮互斥锁时，需检查返回值：
+
+- 若返回 `EOWNERDEAD`，表示前一个持有锁的线程已终止，锁处于不一致状态。
+
+- 需调用 `pthread_mutex_consistent` 标记锁状态为一致后，才能安全使用资源。
+
+代码示例：
+
+```c
+--8<-- "docs/multithreaded-programming-guide/src/pthread_mutexattr_setrobust.c"
+```
+
+#### 获取互斥锁的 健壮性（Robustness） 属性
+
+```c
+#include <pthread.h>
+
+int pthread_mutexattr_getrobust(const pthread_mutexattr_t *attr,
+                                       int *robustness);
 ```

@@ -865,7 +865,7 @@ int pthread_attr_getstack(const pthread_attr_t *attr,
 
 - 访问一个基本类型变量（如整数）时，可以针对一个内存负荷使用多个存储周期。如果整数没有与总线数据宽度对齐或者大于数据宽度，则会使用多个存储周期。
 
-### 互斥锁
+### 互斥锁属性
 
 使用互斥锁（互斥）可以使线程按顺序执行。通常，互斥锁通过确保一次只有一个线程执行代码的临界段来同步多个线程。互斥锁还可以保护单线程代码。
 
@@ -957,6 +957,8 @@ PTHREAD_MUTEX_DEFAULT | 系统默认实现：行为可能因平台而异（通�
 - 递归锁（PTHREAD_MUTEX_RECURSIVE）
     - 同一线程可重复加锁，但必须解锁相同次数才能真正释放锁。
     - 适用于函数递归调用或嵌套访问共享资源的场景。
+    - 线程首次成功获取互斥锁时，锁定计数会设置为 1。线程每重新锁定该互斥锁一次，锁定计数就增加 1。线程每解除锁定该互斥锁一次，锁定计数就减小 1。 锁定计数达到 0 时，该互斥锁即可供其他线程获取。
+    - 如果某个线程尝试解除锁定的互斥锁不是由该线程锁定或者未锁定，则将返回错误。
 
 - 错误检查锁（PTHREAD_MUTEX_ERRORCHECK）
     - 若同一线程尝试重复加锁，会立即返回 EDEADLK 错误，避免死锁。
@@ -1150,3 +1152,367 @@ int pthread_mutexattr_setrobust(const pthread_mutexattr_t *attr,
 int pthread_mutexattr_getrobust(const pthread_mutexattr_t *attr,
                                        int *robustness);
 ```
+
+### 使用互斥锁
+
+#### 初始化互斥锁
+
+```c
+#include <pthread.h>
+
+int pthread_mutex_init(pthread_mutex_t *restrict mutex,
+           const pthread_mutexattr_t *restrict attr);
+```
+
+除了使用 `pthread_mutex_init` 进行锁初始化外，我们还可以通过 `PTHREAD_MUTEX_INITIALIZER` 宏进行静态初始化。
+
+```c
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+```
+
+两者主要区别:
+
+| **特性**                | `PTHREAD_MUTEX_INITIALIZER`               | `pthread_mutex_init`                          |
+|-------------------------|-------------------------------------------|-----------------------------------------------|
+| **属性自定义**          | ❌ 仅支持默认属性（普通非递归锁）          | ✔️ 可自定义属性（如递归锁、健壮锁、优先级协议） |
+| **错误检查**            | ❌ 无返回值，无法检测初始化失败            | ✔️ 返回错误码（如 `ENOMEM`、`EINVAL`）        |
+| **内存分配**            | ❌ 静态分配（通常为全局或静态变量）         | ✔️ 动态分配（如堆内存或局部变量）              |
+| **线程安全**            | ✔️ 线程安全（由编译器/系统保证）           | ❌ 需确保调用时无竞争条件                      |
+| **销毁必要性**          | ❌ 无需销毁                                | ✔️ 必须调用 `pthread_mutex_destroy` 释放资源   |
+| **适用场景**            | 全局锁、静态锁（简单场景）                | 动态创建、需定制属性的锁（复杂场景）          |
+
+#### 标记互斥锁已恢复一致状态
+
+标记互斥锁已恢复一致状态，从而确保在持有锁的线程意外终止后，其他线程可以安全地继续使用该锁及受保护的共享资源。
+
+```c
+#include <pthread.h>
+
+int pthread_mutex_consistent(pthread_mutex_t *mutex);
+```
+
+当一个线程通过 `pthread_mutex_lock` 获取一个 健壮互斥锁 时，如果前一个持有锁的线程意外终止（如崩溃），当前线程会收到返回值 `EOWNERDEAD`。此时，锁的状态被标记为 不一致（Inconsistent）。
+
+`pthread_mutex_consistent` 的作用是：
+
+- 通知系统当前线程已修复锁保护的数据状态，使锁恢复为 一致（Consistent） 状态。
+
+- 允许后续线程正常使用该锁（未调用此函数直接解锁会导致锁永久不可用）。
+
+若未调用 `pthread_mutex_consistent` 直接解锁：
+
+- 锁会被标记为 永久不可用（后续线程尝试加锁会直接失败，返回 ENOTRECOVERABLE）。
+
+- 否则必须通过 `pthread_mutex_destroy` + `pthread_mutex_init` 重新初始化锁。
+
+对比健壮锁：
+
+行为 | 健壮锁（Robust） | 非健壮锁（Non-Robust）
+--- | --- | ---
+持有线程终止 | 其他线程可检测到 `EOWNERDEAD` 并恢复 | 其他线程永久阻塞（死锁）
+是否需要一致性标记| ✔️ 必须调用 `pthread_mutex_consistent` | ❌ 无需
+适用场景 | 高可靠性系统（如实时控制、金融服务）| 简单场景（线程不会意外终止）
+
+
+使用示例：
+
+核心逻辑：检测到 EOWNERDEAD → 修复数据 → 标记一致 → 正常解锁。
+
+```c
+pthread_mutex_t mutex;
+
+// 初始化健壮互斥锁（需设置 PTHREAD_MUTEX_ROBUST）
+pthread_mutexattr_t attr;
+pthread_mutexattr_init(&attr);
+pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_ROBUST); // 注意：标准POSIX名为setrobust，非setrobust_np
+pthread_mutex_init(&mutex, &attr);
+
+// 线程中获取锁
+int ret = pthread_mutex_lock(&mutex);
+if (ret == EOWNERDEAD) {
+    // 修复共享数据的一致性
+    recover_data();
+
+    // 标记锁状态为一致
+    if (pthread_mutex_consistent(&mutex) != 0) {
+        // 错误处理
+    }
+}
+
+// 正常使用共享资源
+access_shared_resource();
+
+// 解锁
+pthread_mutex_unlock(&mutex);
+```
+
+#### 锁定互斥锁
+
+尝试获取互斥锁的所有权。
+
+```c
+#include <pthread.h>
+
+int pthread_mutex_lock(pthread_mutex_t *mutex);
+```
+
+行为：
+
+- 如果锁未被占用，则当前线程立即获得锁，并进入临界区。
+
+- 如果锁已被其他线程占用，则当前线程阻塞（等待），直到锁被释放。
+
+返回值：
+
+- 成功获取锁返回 0。
+
+- 失败返回错误码（如 EINVAL 表示无效锁，EDEADLK 表示死锁等）。
+
+
+##### 互斥锁类型与行为对照表
+
+| **互斥类型**        | **健壮性**        | **重复加锁（Relock）**          | **非持有者解锁（Unlock When Not Owner）** |
+|----------------------|-------------------|----------------------------------|-------------------------------------------|
+| **`NORMAL`**         | 非健壮（non-robust） | 死锁（Deadlock）                | 未定义行为（Undefined）                   |
+| **`NORMAL`**         | 健壮（robust）      | 死锁（Deadlock）                | 返回错误码（Error）                       |
+| **`ERRORCHECK`**     | 任意（either）      | 返回错误码（`EDEADLK`）         | 返回错误码（`EPERM`）                     |
+| **`RECURSIVE`**      | 任意（either）      | 递归加锁（锁计数递增）           | 返回错误码（`EPERM`）                     |
+| **`DEFAULT`**        | 非健壮（non-robust） | 未定义行为（可能映射到其他类型） | 未定义行为（Undefined）                   |
+| **`DEFAULT`**        | 健壮（robust）      | 未定义行为（可能映射到其他类型） | 返回错误码（Error）                       |
+
+进一步说明：
+
+1. `pthread_mutex_trylock` 行为
+
+    - 非阻塞尝试加锁：
+    - 若锁已被占用（包括当前线程），立即返回错误码 `EBUSY`。
+    - 例外：对于 `RECURSIVE` 类型锁，若当前线程已持有锁，锁计数递增并返回成功。
+
+2. 健壮互斥锁（Robust Mutex）
+
+    - **`EOWNERDEAD` 处理**：
+    1. 调用 `pthread_mutex_lock` 返回 `EOWNERDEAD` 时，锁处于不一致状态。
+    2. 需修复数据后调用 `pthread_mutex_consistent` 标记锁为一致。
+    3. 若未修复直接解锁，锁将被标记为永久不可用（需销毁并重新初始化）。
+
+3. 递归锁（`RECURSIVE`）
+
+    - **锁计数机制**：
+    - 首次加锁：计数为 `1`。
+    - 每次重锁：计数 `+1`。
+    - 每次解锁：计数 `-1`，归零时释放锁。
+
+4. 注意事项
+
+    - **未初始化锁**：操作未初始化的锁会导致未定义行为。
+    - **信号中断**：等待锁时若被信号中断，线程会继续等待（如同未被中断）。
+    - **`DEFAULT` 类型**：行为依赖具体实现，可能映射到 `NORMAL`、`ERRORCHECK` 或 `RECURSIVE`。
+
+示例场景：
+
+```c
+pthread_mutex_t mutex;
+pthread_mutexattr_t attr;
+
+// 初始化递归锁
+pthread_mutexattr_init(&attr);
+pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+pthread_mutex_init(&mutex, &attr);
+
+// 同一线程多次加锁
+pthread_mutex_lock(&mutex);  // 计数=1
+pthread_mutex_lock(&mutex);  // 计数=2（递归锁允许）
+pthread_mutex_unlock(&mutex); // 计数=1
+pthread_mutex_unlock(&mutex); // 计数=0（锁释放）
+```
+
+总结：
+
+- **选择锁类型**：  
+
+  - `NORMAL`：简单场景，无死锁检测。  
+  - `ERRORCHECK`：调试场景，检测错误操作。  
+  - `RECURSIVE`：需重入锁的场景。  
+  - `DEFAULT`：依赖平台实现，慎用。
+  
+- **健壮性**：需处理线程意外终止的高可靠性场景。  
+- **关键原则**：始终成对调用 `lock/unlock`，避免未定义行为。
+
+#### 解除锁定互斥锁
+
+释放当前线程持有的互斥锁。
+
+```c
+#include <pthread.h>
+
+int pthread_mutex_unlock(pthread_mutex_t *mutex);
+```
+
+行为：
+
+- 唤醒等待该锁的其他线程（如果有）。
+
+- 若锁已被释放或非当前线程持有，行为未定义（可能返回错误码 EPERM）。
+
+返回值：
+
+- 成功释放返回 0。
+
+- 失败返回错误码（如 EINVAL 或 EPERM）。
+
+#### 尝试锁定互斥锁
+
+```c
+ #include <pthread.h>
+
+int pthread_mutex_trylock(pthread_mutex_t *mutex);
+```
+
+#### 销毁互斥锁
+
+```c
+#include <pthread.h>
+
+int pthread_mutex_destroy(pthread_mutex_t *mutex);
+```
+
+#### 锁分层结构
+
+有时可能需要同时访问两个资源。你可能正在使用其中的一个资源，随后发现还需要另一个资源。如果两个线程尝试声明这两个资源，但是以不同的顺序锁定与这些资源相关联的互斥锁，则会出现问题。
+
+例如，如果两个线程分别锁定互斥锁 1 和互斥锁 2，则每个线程尝试锁定另一个互斥锁时，将会出现死锁。
+
+<div class="grid" markdown>
+
+``` title="线程1"
+
+pthread_mutex_lock(&m1);
+
+/* use resource 1 */ 
+pthread_mutex_lock(&m2);
+
+/* use resources 1 and 2 */ 
+pthread_mutex_unlock(&m2);
+pthread_mutex_unlock(&m1); 
+```
+
+
+``` title="线程2"
+ 
+pthread_mutex_lock(&m2);
+
+/* use resource 2 */ 
+pthread_mutex_lock(&m1);
+
+/* use resources 1 and 2 */ 
+pthread_mutex_unlock(&m1);
+pthread_mutex_unlock(&m2); 
+```
+</div>
+
+避免此问题的最佳方法是，确保线程在锁定多个互斥锁时，以同样的顺序进行锁定。如果始终按照规定的顺序锁定，就不会出现死锁。此方法称为 **锁分层结构**，它通过为互斥锁指定逻辑编号来对这些锁进行排序。例如，规定 mutex1 的逻辑编号为 1，mutex2 的逻辑编号为 2。线程在需要同时锁定这两个互斥锁时，必须先锁定编号较小的互斥锁，再锁定编号较大的互斥锁。
+
+锁分层结构（Lock Hierarchy）是多线程编程中用于预防死锁（Deadlock）的一种设计模式，其核心思想是通过强制规定锁的获取顺序(若锁层次为 A → B → C，线程必须先获取 A，才能获取 B 或 C)，确保所有线程按同一顺序请求锁，从而消除死锁的根源。
+
+死锁(Deadlock)通常由以下四个条件同时满足引发：
+
+- 互斥访问（Mutual Exclusion）：资源被独占使用。
+
+- 持有并等待（Hold and Wait）：线程持有资源时请求新资源。
+
+- 不可剥夺（No Preemption）：资源不能被强制释放。
+
+- 循环等待（Circular Wait）：多个线程形成环形等待链。
+
+**锁分层结构直接破坏“循环等待”条件**，通过统一的锁顺序规则，避免线程以不同顺序请求锁。锁分层结构的核心在于锁的获取顺序，正确释放锁对避免死锁并无直接作用。但按 **逆序释放锁** 有助于代码结构清晰合理，降低潜在错误风险。
+
+##### 锁分层结构的实现方式
+
+1. 定义锁的层次
+
+    为每个锁分配一个层级编号，例如：
+
+    ```c
+    enum LockLevel {
+        LOCK_LEVEL_GLOBAL = 0,  // 最高层（如全局配置锁）
+        LOCK_LEVEL_MODULE,      // 中间层（如模块锁）
+        LOCK_LEVEL_OBJECT       // 最底层（如对象锁）
+    };
+    ```
+
+2. 加锁时验证顺序
+
+    在加锁逻辑中强制检查层级顺序：
+
+    ```c
+    pthread_mutex_t global_mutex, module_mutex, object_mutex;
+
+    void lock(pthread_mutex_t *mutex, enum LockLevel level) {
+        static enum LockLevel current_level = LOCK_LEVEL_GLOBAL;
+        assert(level >= current_level);  // 确保顺序从高层到低层
+        pthread_mutex_lock(mutex);
+        current_level = level;
+    }
+    ```
+
+3. 释放锁的逆序
+
+    通常按 **从低层到高层** 的顺序释放锁：
+
+    ```c
+    void unlock(pthread_mutex_t *mutex, enum LockLevel level) {
+        pthread_mutex_unlock(mutex);
+        // 更新当前层级（可选）
+    }
+    ```
+
+##### 实际应用场景
+
+1. 文件系统操作
+
+    - **高层锁**：目录锁（保护目录结构）。
+    - **低层锁**：文件锁（保护单个文件）。
+    - **规则**：修改文件前必须先锁目录，再锁文件。
+
+2. 数据库事务
+
+    - **高层锁**：表级锁（保护整张表）。
+    - **低层锁**：行级锁（保护单行数据）。
+    - **规则**：更新行数据前必须先锁表，再锁行。
+
+#### 条件锁定
+
+如果线程需要获取多个锁，但无法按照顺序获取，可以使用 `pthread_mutex_trylock()` 尝试获取锁。如果获取失败，线程可以释放已持有的锁，然后重新尝试。
+
+
+<div class="grid" markdown>
+
+``` title="线程1"
+pthread_mutex_lock(&m1); pthread_mutex_lock(&m2);
+
+/* no processing */ 
+
+pthread_mutex_unlock(&m2);
+
+pthread_mutex_unlock(&m1);  
+```
+
+
+``` title="线程2"
+for (; ;)
+{ 
+    pthread_mutex_lock(&m2);
+
+    if(pthread_mutex_trylock(&m1)==0)
+        /* got it */  
+        break;
+
+    /* didn't get it */ 
+    pthread_mutex_unlock(&m2);
+}
+
+/* get locks; no processing */ 
+pthread_mutex_unlock(&m1);
+pthread_mutex_unlock(&m2); 
+```
+</div>

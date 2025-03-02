@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 void* thread_func(void* arg) {
   pthread_mutex_t* mutex = (pthread_mutex_t*)arg;

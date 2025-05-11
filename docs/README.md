@@ -4,6 +4,7 @@
 
 笔记 | 封面 | 类型 | 分类 | 年度
 --- | ---  | --- | --- | ---
+[从零开始写一个哈希表](./write-a-hash-table/) | ![](./images/write-a-hash-table.jpg) | 教程 | 计算机 | 2025
 [多线程编程指南](./multithreaded-programming-guide/) | ![](./images/mpg.png) | 书籍 | 计算机 | 2025
 [深度学习入门](./deep-learning-from-scratch/) | ![](./images/s29815955.jpg) | 书籍 | 计算机 | 2024 
 [C++并发编程实战（第一版）](./cpp-concurrency-in-action/) | ![](./images/s28077549.jpg) | 书籍 | 计算机 | 2024

@@ -4,6 +4,7 @@
 
 笔记 | 封面 | 类型 | 分类 | 年度
 --- | ---  | --- | --- | ---
+[深度学习的数学](./the-math-of-deeplearn/) | ![](./images/s32295077.jpg) | 教程 | 计算机 | 2025
 [从零开始写一个哈希表](./write-a-hash-table/) | ![](./images/write-a-hash-table.jpg) | 教程 | 计算机 | 2025
 [多线程编程指南](./multithreaded-programming-guide/) | ![](./images/mpg.png) | 书籍 | 计算机 | 2025
 [深度学习入门](./deep-learning-from-scratch/) | ![](./images/s29815955.jpg) | 书籍 | 计算机 | 2024 

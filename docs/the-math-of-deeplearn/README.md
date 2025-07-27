@@ -1,6 +1,6 @@
 ---
 created_at: 2025/07/25 23:22
-last_modify_at: 2025/07/27 09:59
+last_modify_at: 2025/07/27 23:14
 ---
 
 # 深度学习的数学
@@ -102,7 +102,7 @@ $$
 
 #### 数列的通项公式
 
-数列中排在第$n$位的数，通常用$a_n$表示，整个数列可以用符号${a_n}$来表示。
+数列中排在第$n$位的数，通常用$a_n$表示，整个数列可以用符号$\{a_n\}$来表示。
 
 将数列的第$n$项用一个关于$n$的式子表示出来，这个式子就称为该数列的通项公式。
 
@@ -442,7 +442,7 @@ $$
 
 有两个以上的自变量的函数称为多变量函数。单变量函数用$f(x)$表示，同理我们可以用$f(x, y)$表示有两个自变量$x$,$y$的函数。以此类推，由$n$个自变量$x_1$,$x_2$,$\cdots$,$x_n$的函数，可以记作$f(x_1,x_2,\cdots,x_n)$。
 
-#### 偏导数
+#### 偏导数定义
 
 关于某个特定变量的导数，称为偏导数（partial derivative)。
 
@@ -471,7 +471,6 @@ $$
 $$
 
 根据多变量函数取得最小值的的必要条件，该函数取得最小值的必要条件是$x=0, y=0$，此时函数值$z$为0。由于$z= x^2 + y^2 \ge 0$,所以可以得出这个函数值0就是该函数的最小值。
-
 
 例子： 当$x^2 + y^2 = 1$时，求$x+y$的最小值。
 
@@ -598,3 +597,133 @@ $$
 &= 2b(ax+ by) +2q(px + qy)
 \end{aligned}
 $$
+
+例6： 当$C=u^2 + v^2 + w^2, u = a_1x + b_1y + c_1z, v = a_2x+ b_2y +c_2z, w=a_3x + b_3y+c_3\quad{(a_i,b_i,c_i为常数，i=1,2,3)}$时请求$C$分别关于$x$、$y$的导函数。
+
+$$
+\begin{aligned}
+\frac{\partial C}{\partial x} &= \frac{\partial C}{\partial u}\frac{\partial u}{\partial x} + \frac{\partial C}{\partial v}\frac{\partial v}{\partial x} + \frac{\partial C}{\partial w}\frac{\partial w}{\partial x}\\\\
+&= 2u\cdot a_1 + 2v\cdot a_2 + 2w \cdot a_3 \\\\
+&= 2a_1(a_1x + b_1y + c_1z) + 2a_2(a_2x+ b_2y + c_2z) + 2a_3(a_3x + b_3y + c_3)
+\end{aligned}
+$$
+
+![](https://static.cyub.vip/images/202507/epub_27337415_780.jpg)
+
+### 多变量函数的近似公式
+
+#### 单变量函数的近似公式
+
+从导函数的定义式：
+
+$$
+f'(x) = \lim_{\Delta x \to 0}\frac{f(x + \Delta x) - f(x)}{\Delta x}
+$$
+
+上面定义式中$\Delta x$为“无限小的值”，如将它替换为“微小的值”，也不会造成很大的误差。因而，下面近似成立：
+
+$$
+f'(x) = \frac{f(x+\Delta x) - f(x)}{\Delta x}
+$$
+
+将上式变形，可以得到**单变量函数的近似公式**:
+
+$$
+f(x + \Delta x) = f(x) + f'(x)\Delta x \quad{(\Delta x 为微小的数)}\quad{(1)}
+$$
+
+例1： 当$f(x) = e^x$时，求$x=0$附近的近似公式。
+
+根据单变量函数的近似公式，我们可以得到：
+
+$$
+e^{x+\Delta x} = e^x + e^x\Delta x \quad{(\Delta x为微小的值)}
+$$
+
+取$x=0$,重新将$\Delta x$替换为$x$，可得$e^x = 1 + x\quad{(x为微小的值)}$。
+
+画出$y=e^x$与$y=1+x$图像，可以看出在$x=0$附近处，两者近乎重叠。
+
+![](https://static.cyub.vip/images/202507/epub_27337415_802.jpg)
+
+#### 多变量函数的近似公式
+
+如果$x$、$y$作微小的变化，那么函数$z= f(x, y)$的值变化可以用下面近似公式表示：
+
+$$
+f(x+\Delta x, y+ \Delta y) = f(x, y) +\frac{\partial f(x,y)}{\partial x}\Delta x + \frac{\partial f(x, y)}{\partial y}\Delta y \quad{(2)}
+$$
+
+我们定义如下$\Delta z$：
+
+$$
+\Delta z = f(x+\Delta x, y+ \Delta y) - f(x, y)
+$$
+
+根据式(2)我们可以得到：
+
+$$
+\Delta z = \frac{\partial z}{\partial x}\Delta x + \frac{\partial z}{\partial y}\Delta y\quad{(3)}
+$$
+
+将式(3)推广到3个变量$x, y, w$函数时，近似公式如下：
+
+$$
+\Delta z = \frac{\partial z}{\partial x}\Delta x + \frac{\partial z}{\partial y}\Delta y + \frac{\partial z}{\partial w}\Delta w\quad{(4)}
+$$
+
+#### 近似公式的向量表示
+
+三个变量的函数的近似公式(4)可以表示为如下两个向量的内积$\nabla z \cdot \Delta x$的形式。
+
+$$
+\nabla z = \left (
+\begin{matrix}
+\frac{\partial z}{\partial x} & \frac{\partial z}{\partial y} & \frac{\partial z}{\partial w}
+\end{matrix}
+\right ) , \Delta x = (\Delta x, \Delta y, \Delta w)
+$$
+
+#### 泰勒展开式
+
+将近似公式的一般化公式称为**泰勒展开式**。例如，在两个变量情况下，这个公式如下所示：
+
+$$
+\begin{aligned}
+f(x + \Delta x, y + \Delta y) &= f(x, y) + \frac{\partial f}{\partial x}\Delta x + \frac{\partial f}{\partial y}\Delta y \\
+&+ \frac{1}{2!}\Bigl\{\frac{\partial ^2 f}{\partial x^2}(\Delta x)^2 + 2\frac{\partial ^2 f}{\partial x \partial y}\Delta x\Delta y + \frac{\partial^2f}{\partial y^2}(\Delta 
+y)^2\Bigr\}\\
+&+ \frac{1}{3!}\Bigl\{ \frac{\partial ^3f}{\partial x^3}(\Delta x)^3 + 3\frac{\partial ^3 f}{\partial x^2 \partial y}(\Delta x)^2\Delta y)+ 3\frac{\partial ^3 f}{\partial x \partial y^2}\Delta x(\Delta y)^2 + \frac{\partial ^3 f}{\partial y^3}(\Delta y)^3 \Bigr\}\\
+&+ \cdots
+\end{aligned}
+$$
+
+上面式子中，我们约定$\frac{\partial ^2 f}{\partial x^2} = \frac{\partial}{\partial x}\frac{\partial f}{\partial x}, \frac{\partial^2 f}{\partial x \partial y} = \frac{\partial }{\partial x}\frac{\partial f}{\partial y}\cdots$。
+
+在泰勒展开式中，取出前三项，就可得到式(2)。
+
+### 梯度下降法
+
+应用数学最重要的任务之一就是寻找函数取最小值的点。梯度下降法，是著名的寻找最小值的点的方法。
+
+##### 梯度下降法的思路
+
+根据前面介绍函数$z=f(x,y)$取得的最小值的必要条件如下：
+
+$$
+\frac{\partial f(x, y)}{\partial x} = 0,\frac{\partial f(x, y)}{\partial y} =0 \quad{(1)}
+$$
+
+在实际问题中，联立方程式(1)通常不容易求解，这个时候**梯度下降法**出场了。该方法不直接求解式(1)的方程，而是通过慢慢地移动图像上的点进行摸索，从而找出函数的最小值。
+
+![](https://static.cyub.vip/images/202507/epub_27337415_851.jpg)
+
+我们将图像看做斜坡，在斜坡上点$P$处放一个乒乓球，然后轻轻松开手，球会沿着最陡的坡面开始滚动，待球稍微前进一点后，把球止住，然后从止住的位置再次松手，乒乓球会从这个点再次沿着最陡的坡面开始滚动。
+
+这个操作反复进行若干次后，乒乓球沿着最短的路径到达了图像的底部，也就是函数的最小值点。梯度下降法就模拟了这个球的移动过程。
+
+如果将画出函数的登高线图，那么梯度下降法移动过程如下：
+
+![](https://static.cyub.vip/images/202507/epub_27337415_852.jpg)
+
+在数值分析领域，梯度下降法也称为**最速下降法**。这个名称表示沿着图像上的最短路径下降。

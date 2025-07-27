@@ -171,6 +171,7 @@ nav:
   - 小说:
       - 遥远的救世主: the-distant-savior/README.md
   - 编程:
+      - "深度学习的数学": "the-math-of-deeplearn/README.md"
       - "从零开始写一个哈希表": "write-a-hash-table/README.md"
       - "多线程编程指南": "multithreaded-programming-guide/README.md"
       - "深度学习入门": "deep-learning-from-scratch/README.ipynb"

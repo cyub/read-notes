@@ -5,6 +5,33 @@
 - **课程名称**：深度学习之应用2024版(Applied Deep Learning 2024)
 - **公开课组织**：台湾大学资讯工程系
 - **官网地址**：https://www.csie.ntu.edu.tw/~miulab/f113-adl/
+- Youtube地址：https://www.youtube.com/playlist?list=PLOAQYZPRn2V6kQfY453CIakozNGR_gQdA
+- 课程PPT:
+	- [Course Logistics](https://note.cyub.vip/slides/adl2024/240904_Course.pdf)
+	- [Introduction](https://note.cyub.vip/slides/adl2024/240904_Introduction.pdf)
+	- [**实践**：Dev Infra & Tooling](https://colab.research.google.com/drive/1yoyDg3411OyddX5fPGomtGe3_0Kz77qT?usp=drive_link)
+	- [Neural Network Basics](https://note.cyub.vip/slides/adl2024/240904_NNBasics.pdf)
+	- [Backpropagation for Optimization](https://note.cyub.vip/slides/adl2024/240904_Backprop.pdf)
+	- [Sequence Modeling:Language Modeling & Recurrent Neural Networks](https://note.cyub.vip/slides/adl2024/240911_SeqModel.pdf)
+	- [Attention Mechanism](https://note.cyub.vip/slides/adl2024/240911_Attention.pdf)
+	- [**实践**： NLPer的一生](https://note.cyub.vip/slides/adl2024/w2-ProjLife.pdf)
+	- [Word Embeddings](https://note.cyub.vip/slides/adl2024/220929_WordEmbeddings.pdf)
+	- [Transformer](https://note.cyub.vip/slides/adl2024/240911_Transformer.pdf)
+	- [Tokenization](https://note.cyub.vip/slides/adl2024/240918_Tokenization.pdf)
+	- [BERT:Bidirectional Encoder Representations from Transformers](https://note.cyub.vip/slides/adl2024/240918_BERT.pdf)
+	- [BERT Variants](https://note.cyub.vip/slides/adl2024/240918_BERTVariants.pdf)
+	- [**实践**: NLPer的底层逻辑](https://note.cyub.vip/slides/adl2024/w3-UnderlyLogic.pdf)
+	- [NLG Decoding](https://note.cyub.vip/slides/adl2024/240925_NLG.pdf)
+	- [Prompt-Based Learning](https://note.cyub.vip/slides/adl2024/241009_PromptLearning.pdf)
+	- [**实践**：Large Language Model Basics and MoE Architecture](https://note.cyub.vip/slides/adl2024/w4-LLMBasicsMOE.pdf)
+	- [LLM Adaptation](https://note.cyub.vip/slides/adl2024/241016_Adaptation.pdf)
+	- [**实践**：Large Language Model Lora Training](https://note.cyub.vip/slides/adl2024/w5-LoRA.pdf)
+	- [Conversational Modeling](https://note.cyub.vip/slides/adl2024/241030_ConvAI.pdf)
+	- [Retrieval-Augmented Generation (RAG)](https://note.cyub.vip/slides/adl2024/241120_RAG.pdf)
+	- [Beyond Supervised Learning](https://note.cyub.vip/slides/adl2024/241127_BeyondSL.pdf)
+	- [**实践**：Large Language Model Inference and Eval](https://note.cyub.vip/slides/adl2024/w6-LLMInferenceEval.pdf)
+	- [Language Agents](https://note.cyub.vip/slides/adl2024/241204_LangAgent.pdf)
+	- [Issues and Development in PLMs: Fairness, Safety, Alignment, Factuality, Multimodality](https://note.cyub.vip/slides/adl2024/241211_Issues.pdf)
 
 ## Backpropagation 效率地计算大量参数
 
@@ -101,9 +128,6 @@ $$
 
 $$
 \nabla C(\theta) = \begin{bmatrix}  \vdots \\ \frac{\partial C(\theta)}{\partial w_{ij}^l}  \\ \vdots \\ \frac{\partial C(\theta)}{\partial b_i^j} \end{bmatrix}
-$$
-
-$$
 $$
 
 #### 链式法则
@@ -228,7 +252,7 @@ $$
 
 现在基于$\delta^{l+1}$来计算$\delta ^l$:
 
-考虑到$z_i^l$的微小变化会影响$a_i^l$，而$a_i^l$会影响第$l+1$层的$z$,进而影响$l+1$的$a$，进而影响第$l+2$层，依次下去最终印象到$C$。依赖传递关系如下：
+考虑到$z_i^l$的微小变化会影响$a_i^l$，而$a_i^l$会影响第$l+1$层的$z$,进而影响$l+1$的$a$，进而影响第$l+2$层，依次下去最终影响到$C$。依赖传递关系如下：
 
 $$
 \Delta z_i^l \to \Delta a_i^l \to Z^{l+1} \to A^{l+1} \to \cdots \to \Delta C\quad{(Z、A是向量)}

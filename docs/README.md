@@ -4,6 +4,7 @@
 
 笔记 | 封面 | 类型 | 分类 | 年度
 --- | ---  | --- | --- | ---
+[台大公开课：Applied Deep Learning 2024](./adl2024) | ![](./images/adl2024.png) | 公开课 | 计算机 | 2025
 [深度学习的数学](./the-math-of-deeplearn/) | ![](./images/s32295077.jpg) | 书籍 | 计算机 | 2025
 [从零开始写一个哈希表](./write-a-hash-table/) | ![](./images/write-a-hash-table.jpg) | 教程 | 计算机 | 2025
 [多线程编程指南](./multithreaded-programming-guide/) | ![](./images/mpg.png) | 书籍 | 计算机 | 2025
